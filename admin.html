@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Emprendedoras de Acero</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Panel de Administración</h1>
+        <button id="logout-button" class="btn" style="position: absolute; top: 2rem; right: 2rem;">Cerrar Sesión</button>
+    </header>
+
+    <main class="container">
+        <div class="form-container" style="max-width: 700px; margin-top: 2rem;">
+            <h2>Añadir Nuevo Producto</h2>
+            <form id="product-form">
+                <div id="image-upload-area">
+                    <p>Arrastra y suelta una imagen aquí, o haz clic para seleccionarla</p>
+                    <input type="file" id="imagen" accept="image/*" style="display: none;">
+                    <img id="image-preview" src="" alt="Vista previa">
+                </div>
+                
+                <input type="text" id="nombre" placeholder="Nombre del Producto" required>
+                <textarea id="descripcion" placeholder="Descripción" required rows="4"></textarea>
+                <input type="number" id="precio" placeholder="Precio" step="0.01" required>
+                <input type="number" id="stock" placeholder="Stock" required>
+                <input type="text" id="categoria" placeholder="Categoría" required>
+                
+                <button type="submit" id="submit-button" class="btn">Guardar Producto</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/js/admin.js"></script>
+</body>
+</html>

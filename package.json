@@ -1,0 +1,24 @@
+{
+  "name": "emprendedoras-de-acero",
+  "version": "1.0.0",
+  "description": "Proyecto de catálogo de productos para Emprendedoras de Acero.",
+  "main": "index.js",
+  "scripts": {
+    "start": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^6.0.0"
+  },
+  "keywords": [
+    "netlify",
+    "functions",
+    "ecommerce"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT"
+}

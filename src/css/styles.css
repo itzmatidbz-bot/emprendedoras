@@ -1,0 +1,193 @@
+/* styles.css para Emprendedoras de Acero */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+  --color-background: #fff9f9; /* Un blanco rosado muy suave */
+  --color-primary: #e8a0bf; /* Rosa pastel principal */
+  --color-secondary: #fce4ec; /* Rosa muy claro para acentos */
+  --color-text: #5c5c5c; /* Gris oscuro para texto legible */
+  --color-heading: #333; /* Negro suave para títulos */
+  --color-white: #ffffff;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* --- Header y Footer --- */
+.header, .footer {
+  background-color: var(--color-white);
+  padding: 1.5rem 0;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.header h1, .footer p {
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+.footer {
+  margin-top: 3rem;
+  font-size: 0.9rem;
+}
+
+/* --- Estilos para el Catálogo de Productos (index.html) --- */
+.section-title {
+  text-align: center;
+  font-size: 2.5rem;
+  color: var(--color-heading);
+  margin-bottom: 3rem;
+  font-weight: 700;
+}
+
+#product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.product-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.product-card-content {
+  padding: 1.5rem;
+}
+
+.product-card h3 {
+  font-size: 1.25rem;
+  color: var(--color-heading);
+  margin-bottom: 0.5rem;
+}
+
+.product-card .price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.product-card .stock {
+  font-size: 0.8rem;
+  color: #999;
+  margin-bottom: 1rem;
+}
+
+.product-card .category {
+  display: inline-block;
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* --- Info Section (Métodos de pago y envíos) --- */
+.info-section {
+    background-color: var(--color-secondary);
+    padding: 3rem 0;
+    margin-top: 3rem;
+}
+
+.info-grid {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 2rem;
+    text-align: center;
+}
+
+.info-box h3 {
+    color: var(--color-heading);
+    margin-bottom: 1rem;
+}
+
+/* --- Estilos para Login y Admin --- */
+.form-container {
+    max-width: 450px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background: var(--color-white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.form-container h1 {
+    margin-bottom: 2rem;
+    color: var(--color-heading);
+}
+
+.form-container input, .form-container textarea, .form-container button {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+}
+
+.btn {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #d187a8;
+}
+
+#image-upload-area {
+    border: 2px dashed var(--color-primary);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    background-color: var(--color-secondary);
+}
+
+#image-preview {
+    max-width: 100px;
+    max-height: 100px;
+    margin-top: 1rem;
+    border-radius: var(--radius);
+}
