@@ -5,74 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Producto - Emprendedoras de Acero</title>
     <link rel="stylesheet" href="src/css/styles.css">
-    <!-- Agregando Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Mejorando el header con navegación -->
+
     <header class="header">
-        <div class="header-content">
-            <a href="/" style="text-decoration: none;"><h1>Emprendedoras de Acero</h1></a>
-            <nav class="nav-menu">
-                <a href="/" class="nav-link">Inicio</a>
-                <a href="/#productos" class="nav-link">Productos</a>
-                <a href="/#contacto" class="nav-link">Contacto</a>
-            </nav>
-            <button class="cart-btn" id="cart-button">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">0</span>
-            </button>
-        </div>
+        <nav class="nav container">
+            <a href="index.html" class="nav__logo">Emprendedoras de Acero</a>
+            <div class="nav__menu">
+                <ul class="nav__list">
+                    <li class="nav__item"><a href="index.html#inicio" class="nav__link">Inicio</a></li>
+                    <li class="nav__item"><a href="index.html#productos" class="nav__link">Catálogo</a></li>
+                    <li class="nav__item"><a href="index.html#contacto" class="nav__link">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="nav__cart">
+                <button id="cart-toggle" class="cart-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="cart-count">0</span>
+                </button>
+            </div>
+        </nav>
     </header>
 
-    <main class="container" id="product-detail" style="margin-top: 100px;">
-        <!-- El contenido del producto se carga dinámicamente -->
+    <main id="product-detail-main" class="container">
+        <!-- El detalle del producto se cargará aquí -->
     </main>
 
-    <!-- Mejorando el footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Emprendedoras de Acero</h3>
-                    <p>Joyería de acero quirúrgico de calidad premium</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Enlaces Rápidos</h3>
-                    <a href="/">Inicio</a>
-                    <a href="/#productos">Productos</a>
-                    <a href="/#contacto">Contacto</a>
-                </div>
-                <div class="footer-section">
-                    <h3>Contacto</h3>
-                    <p>WhatsApp: 092 190 483</p>
-                    <p>Email: info@emprendedorasdeacero.com</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
-            </div>
+            <p>&copy; 2025 Emprendedoras de Acero. Todos los derechos reservados.</p>
         </div>
     </footer>
-    
-    <!-- Mejorando el modal del carrito -->
-    <div class="cart-modal" id="cart-modal">
-        <div class="cart-content">
-            <div class="cart-header">
-                <h3>Tu Carrito</h3>
-                <button id="close-cart" class="close-btn">&times;</button>
+
+    <!-- Modal del Carrito (igual que en index.html) -->
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-modal__content">
+            <div class="cart-modal__header">
+                <h3 class="cart-modal__title">Tu Carrito</h3>
+                <button id="close-cart" class="cart-modal__close">&times;</button>
             </div>
-            <div id="cart-items" class="cart-items">
-                <!-- Items del carrito se cargan aquí -->
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <strong>Total: $<span id="cart-total">0</span></strong>
+            <div id="cart-items" class="cart-modal__items"></div>
+            <div class="cart-modal__footer">
+                <div class="cart-modal__total">
+                    <strong>Total: $<span id="cart-total">0.00</span></strong>
                 </div>
-                <button id="checkout-btn" class="btn checkout-btn">
-                    <i class="fab fa-whatsapp"></i>
-                    Finalizar Compra por WhatsApp
-                </button>
+                <button id="checkout-btn" class="btn btn--primary">Finalizar Compra</button>
+                <button id="clear-cart-btn" class="btn btn--secondary">Vaciar Carrito</button>
             </div>
         </div>
     </div>
