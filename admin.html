@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Emprendedoras de Acero</title>
+    <title>Panel de Administración</title>
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
     <header class="header">
-        <h1>Panel de Administración</h1>
-        <button id="logout-button" class="btn" style="position: absolute; top: 2rem; right: 2rem;">Cerrar Sesión</button>
+        <div class="container header-content">
+            <h1>Panel de Administración</h1>
+            <button id="logout-button" class="btn">Cerrar Sesión</button>
+        </div>
     </header>
 
-    <main class="container">
-        <div class="form-container" style="max-width: 700px; margin-top: 2rem;">
-            <h2>Añadir Nuevo Producto</h2>
+    <main class="container admin-container">
+        <div class="form-container">
+            <h2 id="form-title">Añadir Nuevo Producto</h2>
             <form id="product-form">
+                <input type="hidden" id="product-id">
                 <div id="image-upload-area">
                     <p>Arrastra y suelta una imagen aquí, o haz clic para seleccionarla</p>
                     <input type="file" id="imagen" accept="image/*" style="display: none;">
@@ -29,7 +32,25 @@
                 <input type="text" id="categoria" placeholder="Categoría" required>
                 
                 <button type="submit" id="submit-button" class="btn">Guardar Producto</button>
+                <button type="button" id="cancel-edit-button" class="btn btn-secondary" style="display: none;">Cancelar Edición</button>
             </form>
+        </div>
+
+        <div class="admin-table-container">
+            <h2>Productos Existentes</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="product-list-body">
+                    </tbody>
+            </table>
         </div>
     </main>
 
