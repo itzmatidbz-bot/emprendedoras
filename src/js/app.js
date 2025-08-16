@@ -1,9 +1,12 @@
+// Import Supabase client
+import { createClient } from "https://esm.sh/@supabase/supabase-js"
+
 const SUPABASE_URL = "https://sliqaezclxbvlxwbqpjp.supabase.co" // <-- ¡Pega tu URL aquí!
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk" // <-- ¡Pega tu clave anónima aquí!
 
-const supabase = window.supabase
-const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabaseCliente = supabase
 
 let cart = JSON.parse(localStorage.getItem("cart")) || []
 
@@ -204,6 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarProductos()
   actualizarCarrito()
 
+  // Filtros de categoría
   const filterButtons = document.querySelectorAll(".filter-btn")
   filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -215,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 
+  // Modal del carrito
   const cartBtn = document.getElementById("cart-btn")
   const cartModal = document.getElementById("cart-modal")
   const closeCart = document.getElementById("close-cart")
@@ -244,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
+  // Navegación suave
   const navLinks = document.querySelectorAll(".nav-link")
   navLinks.forEach((link) => {
     link.addEventListener("click", (e) => {
@@ -256,6 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 
+  // Formulario de contacto
   const contactForm = document.getElementById("contact-form")
   if (contactForm) {
     contactForm.addEventListener("submit", (e) => {

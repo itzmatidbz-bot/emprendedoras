@@ -5,24 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Producto - Emprendedoras de Acero</title>
     <link rel="stylesheet" href="src/css/styles.css">
+    <!-- Agregando Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Mejorando el header con navegación -->
     <header class="header">
-        <a href="/" style="text-decoration: none;"><h1>Emprendedoras de Acero</h1></a>
-        <button class="btn cart-button" id="cart-button">
-            🛒 Carrito <span id="cart-count">0</span>
-        </button>
+        <div class="header-content">
+            <a href="/" style="text-decoration: none;"><h1>Emprendedoras de Acero</h1></a>
+            <nav class="nav-menu">
+                <a href="/" class="nav-link">Inicio</a>
+                <a href="/#productos" class="nav-link">Productos</a>
+                <a href="/#contacto" class="nav-link">Contacto</a>
+            </nav>
+            <button class="cart-btn" id="cart-button">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </button>
+        </div>
     </header>
 
-    <main class="container" id="product-detail">
-        </main>
+    <main class="container" id="product-detail" style="margin-top: 100px;">
+        <!-- El contenido del producto se carga dinámicamente -->
+    </main>
 
+    <!-- Mejorando el footer -->
     <footer class="footer">
-        <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Emprendedoras de Acero</h3>
+                    <p>Joyería de acero quirúrgico de calidad premium</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <a href="/">Inicio</a>
+                    <a href="/#productos">Productos</a>
+                    <a href="/#contacto">Contacto</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p>WhatsApp: 092 190 483</p>
+                    <p>Email: info@emprendedorasdeacero.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
+            </div>
+        </div>
     </footer>
     
+    <!-- Mejorando el modal del carrito -->
     <div class="cart-modal" id="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h3>Tu Carrito</h3>
+                <button id="close-cart" class="close-btn">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <!-- Items del carrito se cargan aquí -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <strong>Total: $<span id="cart-total">0</span></strong>
+                </div>
+                <button id="checkout-btn" class="btn checkout-btn">
+                    <i class="fab fa-whatsapp"></i>
+                    Finalizar Compra por WhatsApp
+                </button>
+            </div>
         </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="src/js/producto.js"></script>
