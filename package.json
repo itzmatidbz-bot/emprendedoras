@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "Proyecto de catálogo de productos para Emprendedoras de Acero.",
   "main": "index.js",
+  
   "scripts": {
     "start": "netlify dev",
-    "build": "echo 'No build step required'",
-    "deploy": "netlify deploy"
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "netlify deploy",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0"
+    "@supabase/supabase-js": "^2.0.0",
+    "vite": "^5.0.0"
   },
   "devDependencies": {
     "netlify-cli": "^6.0.0"
