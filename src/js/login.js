@@ -1,27 +1,29 @@
-const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co'; // <-- ¡Pega tu URL aquí!
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk'; // <-- ¡Pega tu clave anónima aquí!
+import { createClient } from "https://esm.sh/@supabase/supabase-js"
 
-const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://sliqaezclxbvlxwbqpjp.supabase.co" // <-- ¡Pega tu URL aquí!
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk" // <-- ¡Pega tu clave anónima aquí!
 
-const loginForm = document.getElementById('login-form');
-const errorMessage = document.getElementById('error-message');
+const supabaseCliente = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    errorMessage.textContent = '';
+const loginForm = document.getElementById("login-form")
+const errorMessage = document.getElementById("error-message")
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault()
+  errorMessage.textContent = ""
 
-    const { data, error } = await supabaseCliente.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
+  const email = document.getElementById("email").value
+  const password = document.getElementById("password").value
 
-    if (error) {
-        errorMessage.textContent = 'Email o contraseña incorrectos.';
-    } else {
-        window.location.href = '/admin.html';
-    }
-});
-// CORREGIDO: Se eliminó una llave "}" extra que había aquí
+  const { data, error } = await supabaseCliente.auth.signInWithPassword({
+    email: email,
+    password: password,
+  })
+
+  if (error) {
+    errorMessage.textContent = "Email o contraseña incorrectos."
+  } else {
+    window.location.href = "/admin.html"
+  }
+})

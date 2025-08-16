@@ -1,5 +1,5 @@
 /* styles.css para Emprendedoras de Acero - MEJORADO */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 :root {
   --color-background: #fff9f9;
@@ -24,7 +24,7 @@
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   background-color: var(--color-background);
   color: var(--color-text);
   line-height: 1.7;
@@ -84,7 +84,7 @@ body {
 }
 
 .nav-link::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 0;
   height: 2px;
@@ -753,7 +753,7 @@ body {
   margin-bottom: 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-size: 1rem;
   transition: var(--transition);
 }
@@ -864,49 +864,49 @@ body {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .nav-menu {
     gap: 1rem;
   }
-  
+
   .hero-content {
     grid-template-columns: 1fr;
     text-align: center;
   }
-  
+
   .hero-content h2 {
     font-size: 2rem;
   }
-  
+
   .about-content {
     grid-template-columns: 1fr;
   }
-  
+
   .contact-content {
     grid-template-columns: 1fr;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .category-filters {
     justify-content: center;
   }
-  
+
   .filter-btn {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
   }
-  
+
   .product-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
-  
+
   .section-title {
     font-size: 2rem;
   }
-  
+
   .container {
     padding: 0 1rem;
   }
@@ -916,15 +916,15 @@ body {
   .hero-content h2 {
     font-size: 1.5rem;
   }
-  
+
   .section-title {
     font-size: 1.5rem;
   }
-  
+
   .product-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .nav-menu {
     display: none;
   }
@@ -940,7 +940,7 @@ body {
 }
 
 .loading::after {
-  content: '';
+  content: "";
   width: 20px;
   height: 20px;
   border: 2px solid var(--color-border);
@@ -951,8 +951,12 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* --- Animations --- */
@@ -976,15 +980,31 @@ body {
   text-align: center;
 }
 
-.mb-1 { margin-bottom: 0.5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 1.5rem; }
-.mb-4 { margin-bottom: 2rem; }
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+.mb-2 {
+  margin-bottom: 1rem;
+}
+.mb-3 {
+  margin-bottom: 1.5rem;
+}
+.mb-4 {
+  margin-bottom: 2rem;
+}
 
-.mt-1 { margin-top: 0.5rem; }
-.mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mt-4 { margin-top: 2rem; }
+.mt-1 {
+  margin-top: 0.5rem;
+}
+.mt-2 {
+  margin-top: 1rem;
+}
+.mt-3 {
+  margin-top: 1.5rem;
+}
+.mt-4 {
+  margin-top: 2rem;
+}
 
 .hidden {
   display: none;
