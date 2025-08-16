@@ -2,39 +2,214 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
-    <title>Emprendedoras de Acero - Catálogo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emprendedoras de Acero - Joyería de Acero Quirúrgico</title>
     <meta name="description" content="Catálogo de joyería de acero quirúrgico en Uruguay. Ventas por mayor y menor con envíos a todo el país.">
     <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- <CHANGE> Header mejorado con navegación y carrito -->
     <header class="header">
-        <h1>Emprendedoras de Acero</h1>
+        <div class="header-content">
+            <h1>Emprendedoras de Acero</h1>
+            <nav class="nav-menu">
+                <a href="#inicio" class="nav-link">Inicio</a>
+                <a href="#productos" class="nav-link">Productos</a>
+                <a href="#sobre-nosotras" class="nav-link">Sobre Nosotras</a>
+                <a href="#contacto" class="nav-link">Contacto</a>
+            </nav>
+            <button class="cart-btn" id="cart-btn">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </button>
+        </div>
     </header>
 
-    <main class="container">
-        <h2 class="section-title">Nuestro Catálogo</h2>
-        <div id="product-grid">
-            </div>
-    </main>
+    <!-- <CHANGE> Sección hero agregada -->
+    <section id="inicio" class="hero-section">
+        <div class="hero-content">
+            <h2>Joyería de Acero Quirúrgico</h2>
+            <p>Elegancia, durabilidad y estilo que perdura. Descubre nuestra colección exclusiva de joyas de acero quirúrgico.</p>
+            <a href="#productos" class="cta-button">Ver Catálogo</a>
+        </div>
+        <div class="hero-image">
+            <img src="/placeholder.svg?height=400&width=600" alt="Colección de joyas de acero">
+        </div>
+    </section>
 
-    <section class="info-section">
-        <div class="container info-grid">
-            <div class="info-box">
-                <h3>Métodos de Pago</h3>
-                <p>Transferencia Bancaria</p>
-                <p>Depósito Abitab o Red Pagos</p>
+    <!-- <CHANGE> Sección de productos mejorada -->
+    <section id="productos" class="products-section">
+        <div class="container">
+            <h2 class="section-title">Nuestro Catálogo</h2>
+            
+            <!-- <CHANGE> Filtros de categoría agregados -->
+            <div class="category-filters">
+                <button class="filter-btn active" data-category="all">Todos</button>
+                <button class="filter-btn" data-category="anillos">Anillos</button>
+                <button class="filter-btn" data-category="collares">Collares</button>
+                <button class="filter-btn" data-category="pulseras">Pulseras</button>
+                <button class="filter-btn" data-category="aretes">Aretes</button>
             </div>
-            <div class="info-box">
-                <h3>Envíos a todo el País</h3>
-                <p>Realizamos el envío dentro de las 48hs hábiles</p>
-                <p>luego de confirmado el pago.</p>
+
+            <div id="product-grid" class="product-grid">
+                <!-- Los productos se cargan dinámicamente -->
             </div>
         </div>
     </section>
 
+    <!-- <CHANGE> Sección "Sobre Nosotras" agregada -->
+    <section id="sobre-nosotras" class="about-section">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>Sobre Nosotras</h2>
+                    <p>Somos <strong>Emprendedoras de Acero</strong>, un emprendimiento uruguayo dedicado a crear joyas únicas de acero quirúrgico. Nuestra pasión por la joyería nos llevó a especializarnos en piezas que combinan elegancia, durabilidad y accesibilidad.</p>
+                    
+                    <div class="features-grid">
+                        <div class="feature">
+                            <i class="fas fa-gem"></i>
+                            <h3>Calidad Premium</h3>
+                            <p>Acero quirúrgico 316L, hipoalergénico y resistente</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-heart"></i>
+                            <h3>Diseño Único</h3>
+                            <p>Piezas cuidadosamente seleccionadas para cada estilo</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-shipping-fast"></i>
+                            <h3>Envío Nacional</h3>
+                            <p>Llegamos a todo Uruguay en 48hs hábiles</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-dollar-sign"></i>
+                            <h3>Precios Justos</h3>
+                            <p>Mayor y menor con los mejores precios del mercado</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <img src="/placeholder.svg?height=400&width=500" alt="Emprendedoras trabajando">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- <CHANGE> Sección de información mejorada -->
+    <section class="info-section">
+        <div class="container">
+            <h2>¿Por qué elegirnos?</h2>
+            <div class="info-grid">
+                <div class="info-box">
+                    <i class="fas fa-credit-card"></i>
+                    <h3>Métodos de Pago</h3>
+                    <p>Transferencia Bancaria</p>
+                    <p>Depósito Abitab o Red Pagos</p>
+                    <p>Mercado Pago</p>
+                </div>
+                <div class="info-box">
+                    <i class="fas fa-truck"></i>
+                    <h3>Envíos a todo el País</h3>
+                    <p>Realizamos el envío dentro de las 48hs hábiles luego de confirmado el pago.</p>
+                    <p>Seguimiento en tiempo real</p>
+                </div>
+                <div class="info-box">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Garantía de Calidad</h3>
+                    <p>Todas nuestras joyas cuentan con garantía</p>
+                    <p>Acero quirúrgico certificado</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- <CHANGE> Sección de contacto agregada -->
+    <section id="contacto" class="contact-section">
+        <div class="container">
+            <h2>Contactanos</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fab fa-whatsapp"></i>
+                        <div>
+                            <h3>WhatsApp</h3>
+                            <p>092 190 483</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h3>Email</h3>
+                            <p>info@emprendedorasdeacero.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h3>Ubicación</h3>
+                            <p>Uruguay - Envíos a todo el país</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <h3>Envianos un mensaje</h3>
+                    <form id="contact-form">
+                        <input type="text" placeholder="Tu nombre" required>
+                        <input type="email" placeholder="Tu email" required>
+                        <textarea placeholder="Tu mensaje" rows="4" required></textarea>
+                        <button type="submit" class="btn">Enviar Mensaje</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- <CHANGE> Modal del carrito agregado -->
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h3>Tu Carrito</h3>
+                <button id="close-cart" class="close-btn">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <!-- Items del carrito se cargan aquí -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <strong>Total: $<span id="cart-total">0</span></strong>
+                </div>
+                <button id="checkout-btn" class="btn checkout-btn">
+                    <i class="fab fa-whatsapp"></i>
+                    Finalizar Compra por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
-        <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Emprendedoras de Acero</h3>
+                    <p>Joyería de acero quirúrgico de calidad premium</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <a href="#inicio">Inicio</a>
+                    <a href="#productos">Productos</a>
+                    <a href="#sobre-nosotras">Sobre Nosotras</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p>WhatsApp: 092 190 483</p>
+                    <p>Email: info@emprendedorasdeacero.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
+            </div>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
