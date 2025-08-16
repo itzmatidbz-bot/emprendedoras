@@ -1,4 +1,5 @@
-const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
+document.addEventListener('DOMContentLoaded', () => {
+    const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
     const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -43,13 +44,13 @@ const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
     function filterProducts() {
         if (!productGrid) return;
         
-        const selectedCategory = document.querySelector('.filter-option.active')?.dataset.category || null;
+        const selectedCategory = document.querySelector('.filter-option.active')?.dataset.category;
         const searchTerm = searchInput.value.toLowerCase();
         const minPrice = parseFloat(minPriceInput.value) || 0;
         const maxPrice = parseFloat(maxPriceInput.value) || Infinity;
         
         const filteredProducts = allProducts.filter(product => {
-            const matchesCategory = selectedCategory ? product.categoria === selectedCategory : true;
+            const matchesCategory = selectedCategory === 'all' || !selectedCategory ? true : product.categoria === selectedCategory;
             const matchesSearch = product.nombre.toLowerCase().includes(searchTerm) || product.descripcion.toLowerCase().includes(searchTerm);
             const matchesPrice = product.precio >= minPrice && product.precio <= maxPrice;
             
@@ -95,7 +96,7 @@ const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
         });
     }
 
-    // --- Cargar Categorías (NUEVO) ---
+    // --- Cargar Categorías (MODIFICADO) ---
     async function loadCategories() {
         const { data, error } = await supabase
             .from('productos')
@@ -109,7 +110,10 @@ const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
 
         const uniqueCategories = [...new Set(data.map(item => item.categoria))];
         
-        categoryFiltersContainer.innerHTML = uniqueCategories.map(category => `
+        // Agregar la opción "Todas" y ponerla activa por defecto
+        const allCategoriesHtml = '<label class="filter-option active" data-category="all">Todas</label>';
+        
+        categoryFiltersContainer.innerHTML = allCategoriesHtml + uniqueCategories.map(category => `
             <label class="filter-option" data-category="${category}">${category}</label>
         `).join('');
 
@@ -253,10 +257,15 @@ const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
         if (activeCategory) {
             activeCategory.classList.remove('active');
         }
+        // Seleccionar "Todas" por defecto
+        const allOption = document.querySelector('.filter-option[data-category="all"]');
+        if (allOption) {
+            allOption.classList.add('active');
+        }
         filterProducts();
     });
 
     // Inicialización
     loadProducts();
     updateCart();
-;
+});

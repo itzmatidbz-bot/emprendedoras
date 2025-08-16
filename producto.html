@@ -7,23 +7,25 @@
     <link rel="stylesheet" href="src/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="body-product">
 
     <header class="header">
         <nav class="nav container">
             <a href="index.html" class="nav__logo">Emprendedoras de Acero</a>
-            <div class="nav__menu">
+            <div class="nav__menu" id="nav-menu">
                 <ul class="nav__list">
                     <li class="nav__item"><a href="index.html#inicio" class="nav__link">Inicio</a></li>
                     <li class="nav__item"><a href="index.html#productos" class="nav__link">Catálogo</a></li>
                     <li class="nav__item"><a href="index.html#contacto" class="nav__link">Contacto</a></li>
                 </ul>
+                <button class="nav__close" id="nav-close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="nav__cart">
+            <div class="nav__actions">
                 <button id="cart-toggle" class="cart-btn">
                     <i class="fas fa-shopping-cart"></i>
                     <span id="cart-count" class="cart-count">0</span>
                 </button>
+                <button class="nav__toggle" id="nav-toggle"><i class="fas fa-bars"></i></button>
             </div>
         </nav>
     </header>
@@ -55,7 +57,6 @@
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="src/js/producto.js"></script>
 </body>

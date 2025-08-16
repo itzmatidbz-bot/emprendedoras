@@ -248,10 +248,6 @@ section {
     text-align: center;
 }
 
-.section--light .section-title {
-    color: var(--primary-color);
-}
-
 .section--light p {
     max-width: 600px;
     margin: 0 auto 2rem;
@@ -436,6 +432,13 @@ section {
     margin-bottom: 1.5rem;
 }
 
+/* --- NUEVO: Estilos del cuerpo para la página de producto --- */
+.body-product {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-body);
+}
+
 /* --- NEW: Filtros y Barra Lateral --- */
 .products-container {
     display: grid;
@@ -529,6 +532,12 @@ section {
 .btn--small {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
+}
+
+/* --- NUEVO: Estilo para el botón de añadir al carrito en el detalle del producto --- */
+.btn--add-to-cart-detail {
+  width: 100%;
+  text-align: center;
 }
 
 /* --- ESTILOS RESPONSIVE --- */
