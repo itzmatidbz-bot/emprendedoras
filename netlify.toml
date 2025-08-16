@@ -1,6 +1,6 @@
 [build]
-  functions = "netlify/functions"
-  publish = "dist"
+  publish = "."  # Un punto "." significa "la carpeta actual"
+  functions = "netlify/functions" # Si usas funciones, esta línea es importante
 
 [dev]
   functions = "netlify/functions"
