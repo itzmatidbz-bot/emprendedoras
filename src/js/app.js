@@ -3,38 +3,92 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function cargarProductos() {
-    const grid = document.getElementById('product-grid');
-    if (!grid) return;
-    
-    grid.innerHTML = '<p>Cargando productos...</p>';
+// --- Elementos del DOM ---
+const productGrid = document.getElementById('product-grid');
+const cartButton = document.getElementById('cart-button');
+const cartModal = document.getElementById('cart-modal');
+const closeCartButton = document.getElementById('close-cart-button');
+const cartItemsContainer = document.getElementById('cart-items');
+const cartTotalElement = document.getElementById('cart-total');
+const cartCount = document.getElementById('cart-count');
+const checkoutButton = document.getElementById('checkout-button');
 
-    const { data, error } = await supabaseCliente
-        .from('productos')
-        .select('*')
-        .order('created_at', { ascending: false });
+// --- Estado del Carrito ---
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-    if (error || data.length === 0) {
-        grid.innerHTML = '<p>Aún no hay productos para mostrar. ¡Vuelve pronto!</p>';
-        console.error('Error al cargar productos:', error);
+// --- Lógica Principal ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadProducts();
+    updateCartUI();
+    cartButton.addEventListener('click', () => cartModal.classList.add('show'));
+    closeCartButton.addEventListener('click', () => cartModal.classList.remove('show'));
+    checkoutButton.addEventListener('click', sendWhatsAppOrder);
+});
+
+// --- Cargar Productos ---
+async function loadProducts() {
+    if (!productGrid) return;
+    productGrid.innerHTML = '<p>Cargando productos...</p>';
+    const { data, error } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
+    if (error) {
+        productGrid.innerHTML = '<p>Error al cargar productos.</p>';
         return;
     }
-
-    grid.innerHTML = data.map(producto => `
-        <div class="product-card">
-            <img src="${producto.imagen_url}" alt="${producto.nombre}" loading="lazy">
+    productGrid.innerHTML = data.map(product => `
+        <a href="producto.html?id=${product.id}" class="product-card">
+            <img src="${product.imagen_url}" alt="${product.nombre}">
             <div class="product-card-content">
-                <div class="category">${producto.categoria}</div>
-                <h3>${producto.nombre}</h3>
-                <p>${producto.descripcion}</p>
-                <div class="stock">Stock: ${producto.stock}</div>
-                <div class="price">$${producto.precio}</div>
+                <h3>${product.nombre}</h3>
+                <div class="price">$${product.precio}</div>
             </div>
-        </div>
+        </a>
     `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    cargarProductos();
-});
-// CORREGIDO: Se eliminó una llave "}" extra que había aquí
+// --- Lógica del Carrito ---
+function updateCartUI() {
+    updateCartCount();
+    updateCartModal();
+}
+
+function updateCartCount() {
+    cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+function updateCartModal() {
+    if (cart.length === 0) {
+        cartItemsContainer.innerHTML = '<p>Tu carrito está vacío.</p>';
+        cartTotalElement.innerHTML = '';
+        return;
+    }
+    cartItemsContainer.innerHTML = cart.map(item => `
+        <div class="cart-item">
+            <span class="cart-item-info">${item.quantity}x ${item.nombre}</span>
+            <span>$${item.price * item.quantity}</span>
+        </div>
+    `).join('');
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cartTotalElement.textContent = `Total: $${total}`;
+}
+
+function sendWhatsAppOrder() {
+    if (cart.length === 0) {
+        alert("Tu carrito está vacío.");
+        return;
+    }
+    const phoneNumber = "59892190483"; // Número de WhatsApp de destino
+    let message = "¡Hola Emprendedoras de Acero! ✨\nQuisiera hacer el siguiente pedido:\n\n";
+    cart.forEach(item => {
+        message += `*${item.quantity}x* - ${item.nombre} ($${item.price})\n`;
+    });
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    message += `\n*Total del pedido: $${total}*`;
+    
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    // Limpiar carrito y redirigir
+    cart = [];
+    localStorage.removeItem('cart');
+    updateCartUI();
+    window.open(whatsappUrl, '_blank');
+}
