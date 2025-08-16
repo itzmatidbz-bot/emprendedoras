@@ -1,4 +1,4 @@
-[⚠️ Suspicious Content] !DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -28,65 +28,54 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span id="cart-count" class="cart-count">0</span>
                 </button>
-                <button class="nav__toggle" id="nav-toggle"><i class="fas fa-bars"></i></button>
+                <button class="nav__toggle" id="nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </nav>
     </header>
 
     <main>
-        <section id="inicio" class="hero">
-            <div class="container">
-                <h1 class="hero__title">Emprendedoras de Acero</h1>
-                <p class="hero__subtitle">Joyería que celebra tu fuerza y estilo</p>
-                <a href="#productos" class="btn">Explorar Colección</a>
+        <section class="hero" id="inicio">
+            <div class="hero__container container">
+                <h1 class="hero__title">Estilo que Perdura</h1>
+                <p class="hero__subtitle">Joyería de acero quirúrgico para realzar tu belleza día a día.</p>
+                <a href="#productos" class="btn">Ver Colección</a>
             </div>
         </section>
 
-        <section id="productos" class="section">
+        <section class="products" id="productos">
             <div class="container">
-                <h2 class="section-title">Nuestra Colección</h2>
-                <!-- NUEVO: Contenedor para filtros y productos -->
-                <div class="products-container">
-                    <!-- NUEVO: Barra lateral de filtros -->
-                    <aside class="sidebar">
-                        <div class="filter-group">
-                            <h4 class="filter-title">Buscar</h4>
-                            <div class="search-bar">
-                                <input type="text" id="search-input" placeholder="Buscar productos...">
-                                <i class="fas fa-search"></i>
-                            </div>
-                        </div>
-                        <div class="filter-group">
-                            <h4 class="filter-title">Categorías</h4>
-                            <div id="category-filters" class="filter-options">
-                                <!-- Las categorías se cargarán aquí -->
-                            </div>
-                        </div>
-                        <div class="filter-group">
-                            <h4 class="filter-title">Precio</h4>
-                            <div class="price-range">
-                                <label for="min-price">Min:</label>
-                                <input type="number" id="min-price" value="0" min="0">
-                                <label for="max-price">Max:</label>
-                                <input type="number" id="max-price" value="5000" min="0">
-                                <button id="filter-price-btn" class="btn btn--small">Aplicar</button>
-                            </div>
-                        </div>
-                        <div class="filter-group">
-                             <button id="reset-filters-btn" class="btn btn--secondary">Limpiar Filtros</button>
-                        </div>
-                    </aside>
-                    <!-- Fin de la barra lateral -->
+                <h2 class="section-title">Nuestro Catálogo</h2>
 
-                    <div id="product-grid" class="product-grid">
-                        <!-- Productos se cargarán aquí -->
+                <div class="filter-controls">
+                    <div class="filter-group search-filter">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Buscar por nombre...">
+                    </div>
+                    <div class="filter-group price-filter">
+                        <input type="number" id="min-price" placeholder="Min $" min="0">
+                        <span>-</span>
+                        <input type="number" id="max-price" placeholder="Max $" min="0">
+                    </div>
+                     <div class="filter-group category-filter">
+                        <label>Categorías:</label>
+                        <div id="category-filters" class="category-buttons">
+                            </div>
+                    </div>
+                    <div class="filter-group">
+                         <button id="clear-filters-btn" class="btn btn--secondary">Limpiar Filtros</button>
                     </div>
                 </div>
-                <!-- Fin del contenedor principal -->
+                <div id="product-grid" class="product-grid">
+                    </div>
+                 <p id="no-results-message" class="no-results-message" style="display: none;">
+                    No se encontraron productos que coincidan con tu búsqueda.
+                </p>
             </div>
         </section>
 
-        <section id="contacto" class="section section--light">
+        <section class="contact" id="contacto">
             <div class="container">
                  <h2 class="section-title">Contacto</h2>
                  <p>¿Consultas o ventas por mayor? Escríbenos.</p>
@@ -101,7 +90,6 @@
         </div>
     </footer>
 
-    <!-- Modal del Carrito -->
     <div id="cart-modal" class="cart-modal">
         <div class="cart-modal__content">
             <div class="cart-modal__header">
@@ -109,8 +97,7 @@
                 <button id="close-cart" class="cart-modal__close">&times;</button>
             </div>
             <div id="cart-items" class="cart-modal__items">
-                <!-- Items del carrito se cargarán aquí -->
-            </div>
+                </div>
             <div class="cart-modal__footer">
                 <div class="cart-modal__total">
                     <strong>Total: $<span id="cart-total">0.00</span></strong>
@@ -123,6 +110,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="src/js/app.js"></script>
-    
 </body>
 </html>
