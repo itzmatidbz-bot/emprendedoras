@@ -1,10 +1,6 @@
-const SUPABASE_URL = 'https://fmsysdjqcliuwjesilam.supabase.co'; // <-- ¡Pega tu URL aquí!
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtc3lzZGpxY2xpdXdqZXNpbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDYzNTYsImV4cCI6MjA3MDg4MjM1Nn0.PJpuqtAAnP5396wzP-g4Bh2tFs_NWjJ6YgyQiTVcx5w'; // <-- ¡Pega tu clave anónima aquí!
+const SUPABASE_URL = 'https://fmsysdjqcliuwjesilam.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtc3lzZGpxY2xpdXdqZXNpbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDYzNTYsImV4cCI6MjA3MDg4MjM1Nn0.PJpuqtAAnP5396wzP-g4Bh2tFs_NWjJ6YgyQiTVcx5w';
 
-
-// --- CORRECCIÓN CLAVE ---
-// El objeto global del script es 'supabase'. Lo usamos para crear nuestro cliente
-// y lo guardamos en una variable con un nombre diferente para evitar conflictos.
 const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const loginForm = document.getElementById('login-form');
@@ -28,3 +24,4 @@ loginForm.addEventListener('submit', async (event) => {
         window.location.href = '/admin.html';
     }
 });
+// CORREGIDO: Se eliminó una llave "}" extra que había aquí
