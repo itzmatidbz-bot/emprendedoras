@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Emprendedoras de Acero - Catálogo</title>
     <meta name="description" content="Catálogo de joyería de acero quirúrgico en Uruguay. Ventas por mayor y menor con envíos a todo el país.">
     <link rel="stylesheet" href="src/css/styles.css">
@@ -10,41 +10,32 @@
 <body>
     <header class="header">
         <h1>Emprendedoras de Acero</h1>
-        <button class="btn cart-button" id="cart-button">
-            🛒 Carrito <span id="cart-count">0</span>
-        </button>
     </header>
 
     <main class="container">
         <h2 class="section-title">Nuestro Catálogo</h2>
-        <div id="product-grid"></div>
+        <div id="product-grid">
+            </div>
     </main>
-    
-    <section class="about-section">
-        <div class="container">
-            <h2 class="section-title">Sobre Nosotras</h2>
-            <p>
-                Somos Emprendedoras de Acero, una marca familiar dedicada a ofrecer la mejor joyería de acero quirúrgico en todo el país. Creemos en la calidad, el diseño y en potenciar la belleza de cada persona con piezas únicas y duraderas. ¡Gracias por apoyarnos!
-            </p>
+
+    <section class="info-section">
+        <div class="container info-grid">
+            <div class="info-box">
+                <h3>Métodos de Pago</h3>
+                <p>Transferencia Bancaria</p>
+                <p>Depósito Abitab o Red Pagos</p>
+            </div>
+            <div class="info-box">
+                <h3>Envíos a todo el País</h3>
+                <p>Realizamos el envío dentro de las 48hs hábiles</p>
+                <p>luego de confirmado el pago.</p>
+            </div>
         </div>
     </section>
 
     <footer class="footer">
-        <h3>Métodos de Pago y Envíos</h3>
-        <p>Aceptamos Transferencia Bancaria y Depósitos Abitab/Red Pagos.</p>
-        <p>Enviamos a todo el país dentro de las 48hs luego de confirmado el pago.</p>
         <p>&copy; 2025 Emprendedoras de Acero - Todos los derechos reservados.</p>
     </footer>
-
-    <div class="cart-modal" id="cart-modal">
-        <div class="cart-content">
-            <h2>Tu Pedido</h2>
-            <div id="cart-items"></div>
-            <div class="cart-total" id="cart-total"></div>
-            <button class="btn btn-success" id="checkout-button" style="width: 100%; margin-top: 1rem;">Finalizar Pedido por WhatsApp</button>
-            <button class="btn" id="close-cart-button" style="width: 100%; margin-top: 0.5rem; background-color: #ccc;">Seguir comprando</button>
-        </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="src/js/app.js"></script>
