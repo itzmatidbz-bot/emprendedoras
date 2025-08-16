@@ -2,10 +2,6 @@
 const SUPABASE_URL = 'https://fmsysdjqcliuwjesilam.supabase.co'; // <-- ¡Pega tu URL aquí!
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtc3lzZGpxY2xpdXdqZXNpbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDYzNTYsImV4cCI6MjA3MDg4MjM1Nn0.PJpuqtAAnP5396wzP-g4Bh2tFs_NWjJ6YgyQiTVcx5w'; // <-- ¡Pega tu clave anónima aquí!
 
-
-// --- CORRECCIÓN CLAVE ---
-// El objeto global del script es 'supabase'. Lo usamos para crear nuestro cliente
-// y lo guardamos en una variable con un nombre diferente para evitar conflictos.
 const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Elementos del DOM ---
@@ -40,23 +36,9 @@ logoutButton.addEventListener('click', async () => {
 function setupImageUpload() {
     imageUploadArea.addEventListener('click', () => imageInput.click());
     imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-    imageUploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        imageUploadArea.style.borderColor = 'var(--color-primary)';
-    });
-    imageUploadArea.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        imageUploadArea.style.borderColor = '#ccc';
-    });
-    imageUploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        imageUploadArea.style.borderColor = '#ccc';
-        handleFiles(e.dataTransfer.files);
-    });
+    imageUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = 'var(--color-primary)'; });
+    imageUploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = '#ccc'; });
+    imageUploadArea.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = '#ccc'; handleFiles(e.dataTransfer.files); });
 }
 
 function handleFiles(files) {
@@ -64,9 +46,7 @@ function handleFiles(files) {
     if (file && file.type.startsWith('image/')) {
         imageInput.files = files;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-        };
+        reader.onload = (e) => { imagePreview.src = e.target.result; };
         reader.readAsDataURL(file);
     }
 }
@@ -78,7 +58,6 @@ productForm.addEventListener('submit', async (e) => {
     submitButton.textContent = 'Guardando...';
 
     const file = imageInput.files[0];
-
     if (!file) {
         alert('Por favor, selecciona una imagen para el producto.');
         submitButton.disabled = false;
@@ -86,7 +65,6 @@ productForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    // 1. Subir imagen a Supabase Storage
     const filePath = `public/${Date.now()}-${file.name}`;
     const { data: uploadData, error: uploadError } = await supabaseCliente.storage
         .from('productos')
@@ -94,17 +72,16 @@ productForm.addEventListener('submit', async (e) => {
 
     if (uploadError) {
         alert('Error al subir la imagen: ' + uploadError.message);
+        console.error(uploadError); // Para ver el error detallado en consola
         submitButton.disabled = false;
         submitButton.textContent = 'Guardar Producto';
         return;
     }
 
-    // 2. Obtener la URL pública
     const { data: urlData } = supabaseCliente.storage
         .from('productos')
         .getPublicUrl(uploadData.path);
     
-    // 3. Guardar en la base de datos
     const productData = {
         nombre: document.getElementById('nombre').value,
         descripcion: document.getElementById('descripcion').value,
