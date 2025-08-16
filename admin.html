@@ -29,7 +29,7 @@
                 <textarea id="descripcion" placeholder="Descripción" required rows="4"></textarea>
                 <input type="number" id="precio" placeholder="Precio" step="0.01" required>
                 <input type="number" id="stock" placeholder="Stock" required>
-                <input type="text" id="categoria" placeholder="Categoría" required>
+                <input type="text" id="categoria" placeholder="Categoría (ej: Anillos, Cadenas)" required>
                 
                 <button type="submit" id="submit-button" class="btn">Guardar Producto</button>
                 <button type="button" id="cancel-edit-button" class="btn btn-secondary" style="display: none;">Cancelar Edición</button>
@@ -49,7 +49,8 @@
                     </tr>
                 </thead>
                 <tbody id="product-list-body">
-                    </tbody>
+                    <!-- Los productos se cargarán aquí -->
+                </tbody>
             </table>
         </div>
     </main>
