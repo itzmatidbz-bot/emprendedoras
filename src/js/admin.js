@@ -3,7 +3,10 @@ const SUPABASE_URL = 'https://fmsysdjqcliuwjesilam.supabase.co'; // <-- ¡Pega t
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtc3lzZGpxY2xpdXdqZXNpbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDYzNTYsImV4cCI6MjA3MDg4MjM1Nn0.PJpuqtAAnP5396wzP-g4Bh2tFs_NWjJ6YgyQiTVcx5w'; // <-- ¡Pega tu clave anónima aquí!
 
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// --- CORRECCIÓN CLAVE ---
+// El objeto global del script es 'supabase'. Lo usamos para crear nuestro cliente
+// y lo guardamos en una variable con un nombre diferente para evitar conflictos.
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Elementos del DOM ---
 const logoutButton = document.getElementById('logout-button');
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Proteger la página
 async function checkUserSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseCliente.auth.getSession();
     if (!session) {
         window.location.href = '/login.html';
     }
@@ -29,7 +32,7 @@ async function checkUserSession() {
 
 // Cerrar sesión
 logoutButton.addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await supabaseCliente.auth.signOut();
     window.location.href = '/login.html';
 });
 
@@ -85,7 +88,7 @@ productForm.addEventListener('submit', async (e) => {
 
     // 1. Subir imagen a Supabase Storage
     const filePath = `public/${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabaseCliente.storage
         .from('productos')
         .upload(filePath, file);
 
@@ -97,7 +100,7 @@ productForm.addEventListener('submit', async (e) => {
     }
 
     // 2. Obtener la URL pública
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabaseCliente.storage
         .from('productos')
         .getPublicUrl(uploadData.path);
     
@@ -111,7 +114,7 @@ productForm.addEventListener('submit', async (e) => {
         imagen_url: urlData.publicUrl,
     };
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await supabaseCliente
         .from('productos')
         .insert([productData]);
 

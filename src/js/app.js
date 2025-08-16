@@ -2,8 +2,8 @@
 const SUPABASE_URL = 'https://fmsysdjqcliuwjesilam.supabase.co'; // <-- ¡Pega tu URL aquí!
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtc3lzZGpxY2xpdXdqZXNpbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDYzNTYsImV4cCI6MjA3MDg4MjM1Nn0.PJpuqtAAnP5396wzP-g4Bh2tFs_NWjJ6YgyQiTVcx5w'; // <-- ¡Pega tu clave anónima aquí!
 
-
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// --- CORRECCIÓN CLAVE ---
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function cargarProductos() {
     const grid = document.getElementById('product-grid');
@@ -11,7 +11,7 @@ async function cargarProductos() {
     
     grid.innerHTML = '<p>Cargando productos...</p>';
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseCliente
         .from('productos')
         .select('*')
         .order('created_at', { ascending: false });
@@ -26,11 +26,11 @@ async function cargarProductos() {
         <div class="product-card">
             <img src="${producto.imagen_url}" alt="${producto.nombre}" loading="lazy">
             <div class="product-card-content">
+                <div class="category">${producto.categoria}</div>
                 <h3>${producto.nombre}</h3>
                 <p>${producto.descripcion}</p>
-                <div class="price">$${producto.precio}</div>
                 <div class="stock">Stock: ${producto.stock}</div>
-                <div class="category">${producto.categoria}</div>
+                <div class="price">$${producto.precio}</div>
             </div>
         </div>
     `).join('');
