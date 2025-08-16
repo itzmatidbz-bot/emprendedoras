@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
     const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // --- Elementos del DOM ---
     const productGrid = document.getElementById('product-grid');
     const cartCount = document.getElementById('cart-count');
     const cartModal = document.getElementById('cart-modal');
@@ -12,8 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeCartBtn = document.getElementById('close-cart');
     const checkoutBtn = document.getElementById('checkout-btn');
     const clearCartBtn = document.getElementById('clear-cart-btn');
+    const navMenu = document.getElementById('nav-menu');
+    const navToggle = document.getElementById('nav-toggle');
+    const navClose = document.getElementById('nav-close');
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // --- Menú Responsive ---
+    if (navToggle) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.add('show-menu');
+        });
+    }
+    if (navClose) {
+        navClose.addEventListener('click', () => {
+            navMenu.classList.remove('show-menu');
+        });
+    }
 
     // --- Cargar Productos ---
     async function loadProducts() {
@@ -46,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
         
-        // Añadir event listener para ir a la página del producto
         document.querySelectorAll('.product-card').forEach(card => {
             card.addEventListener('click', () => {
                 const productId = card.dataset.id;
@@ -93,16 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cartTotal.textContent = total.toFixed(2);
     }
 
-    function addToCart(product, quantity = 1) {
-        const existingItem = cart.find(item => item.id === product.id);
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            cart.push({ ...product, quantity });
-        }
-        updateCart();
-    }
-    
     function handleCartInteraction(e) {
         const target = e.target;
         const cartItem = target.closest('.cart-item');
@@ -110,19 +115,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const id = parseInt(cartItem.dataset.id);
 
-        // Eliminar item
         if (target.closest('.cart-item__remove')) {
             cart = cart.filter(item => item.id !== id);
         }
 
-        // Actualizar cantidad
         if (target.classList.contains('cart-item__quantity-input')) {
             const newQuantity = parseInt(target.value);
             const itemInCart = cart.find(item => item.id === id);
             if (itemInCart && newQuantity > 0) {
                 itemInCart.quantity = newQuantity;
             } else {
-                // Si la cantidad es 0 o inválida, eliminar el producto
                 cart = cart.filter(item => item.id !== id);
             }
         }
@@ -151,11 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     cartToggle.addEventListener('click', () => cartModal.classList.add('open'));
     closeCartBtn.addEventListener('click', () => cartModal.classList.remove('open'));
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) {
-            cartModal.classList.remove('open');
-        }
-    });
     
     cartItemsContainer.addEventListener('change', handleCartInteraction);
     cartItemsContainer.addEventListener('click', handleCartInteraction);
