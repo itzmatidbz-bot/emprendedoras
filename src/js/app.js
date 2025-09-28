@@ -63,8 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Aplicar animaciones con retraso
         products.forEach((product, index) => {
-        
-        products.forEach(product => {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.dataset.productId = product.id; // Guardamos el ID para fácil acceso
@@ -261,16 +259,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             subtotal,
             discount,
-            shipping,
-            total: subtotal - discount + shipping,
-            discountMessage,
-            shippingMessage
+            total: subtotal - discount,
+            discountMessage
         };
     }
 
     function updateCartTotal() {
         const subtotal = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        const { total, discount, shipping, discountMessage, shippingMessage } = calculateDiscounts(subtotal);
+        const { total, discount, discountMessage } = calculateDiscounts(subtotal);
 
         // Actualizar el HTML del total del carrito
         const cartTotalContainer = document.querySelector('.cart-modal__footer');
@@ -285,10 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${discountMessage}:</span>
                     <span>-$${discount.toFixed(2)}</span>
                 </div>` : ''}
-                <div class="summary-line ${shipping === 0 ? 'free-shipping' : ''}">
-                    <span>${shippingMessage}:</span>
-                    <span>${shipping === 0 ? 'Gratis' : '$' + shipping.toFixed(2)}</span>
-                </div>
+
                 <div class="summary-line total">
                     <span>Total:</span>
                     <span>$${total.toFixed(2)}</span>
@@ -315,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const subtotal = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        const { total, discount, shipping, discountMessage } = calculateDiscounts(subtotal);
+        const { total, discount, discountMessage } = calculateDiscounts(subtotal);
 
         let message = "🛒 *NUEVO PEDIDO*\n\n";
         message += "📌 *Detalles del pedido:*\n";
