@@ -219,9 +219,74 @@ document.addEventListener('DOMContentLoaded', () => {
         cartCount.textContent = totalItems;
     }
 
+    function calculateDiscounts(subtotal) {
+        let discount = 0;
+        let shipping = 150; // Costo base de envío
+        let discountMessage = '';
+        let shippingMessage = '';
+
+        // Descuento por compra mayorista
+        if (subtotal >= 2000) {
+            discount = subtotal * 0.15; // 15% de descuento
+            discountMessage = 'Descuento mayorista (15%)';
+        }
+
+        // Envío gratis
+        if (subtotal >= 1000) {
+            shipping = 0;
+            shippingMessage = 'Envío gratis';
+        } else {
+            shippingMessage = 'Costo de envío';
+        }
+
+        return {
+            subtotal,
+            discount,
+            shipping,
+            total: subtotal - discount + shipping,
+            discountMessage,
+            shippingMessage
+        };
+    }
+
     function updateCartTotal() {
-        const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        cartTotal.textContent = total.toFixed(2);
+        const subtotal = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+        const { total, discount, shipping, discountMessage, shippingMessage } = calculateDiscounts(subtotal);
+
+        // Actualizar el HTML del total del carrito
+        const cartTotalContainer = document.querySelector('.cart-modal__footer');
+        cartTotalContainer.innerHTML = `
+            <div class="cart-modal__summary">
+                <div class="summary-line">
+                    <span>Subtotal:</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+                ${discount > 0 ? `
+                <div class="summary-line discount">
+                    <span>${discountMessage}:</span>
+                    <span>-$${discount.toFixed(2)}</span>
+                </div>` : ''}
+                <div class="summary-line ${shipping === 0 ? 'free-shipping' : ''}">
+                    <span>${shippingMessage}:</span>
+                    <span>${shipping === 0 ? 'Gratis' : '$' + shipping.toFixed(2)}</span>
+                </div>
+                <div class="summary-line total">
+                    <span>Total:</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            </div>
+            <button id="checkout-btn" class="btn btn--primary">Finalizar Compra</button>
+            <button id="clear-cart-btn" class="btn btn--secondary">Vaciar Carrito</button>
+        `;
+
+        // Reattach event listeners
+        document.getElementById('checkout-btn').addEventListener('click', checkout);
+        document.getElementById('clear-cart-btn').addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                cart = [];
+                updateCart();
+            }
+        });
     }
     
     function checkout() {
@@ -229,14 +294,45 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Tu carrito está vacío.");
             return;
         }
-        let message = "¡Hola! Quisiera hacer el siguiente pedido:\n\n";
+
+        const subtotal = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+        const { total, discount, shipping, discountMessage } = calculateDiscounts(subtotal);
+
+        let message = "🛒 *NUEVO PEDIDO*\n\n";
+        message += "📌 *Detalles del pedido:*\n";
         cart.forEach(item => {
-            message += `${item.quantity}x ${item.nombre} - $${(item.precio * item.quantity).toFixed(2)}\n`;
+            message += `\n• ${item.nombre}\n`;
+            message += `   - Cantidad: ${item.quantity}\n`;
+            message += `   - Precio unitario: $${item.precio.toFixed(2)}\n`;
+            message += `   - Subtotal: $${(item.precio * item.quantity).toFixed(2)}\n`;
+            message += `   - Ver producto: ${item.imagen_url}\n`;
         });
-        const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        message += `\n*Total: $${total.toFixed(2)}*`;
+
+        message += "\n💳 *Resumen del pedido:*\n";
+        message += `• Subtotal: $${subtotal.toFixed(2)}\n`;
+        
+        if (discount > 0) {
+            message += `• ${discountMessage}: -$${discount.toFixed(2)}\n`;
+        }
+        
+        if (shipping === 0) {
+            message += `• Envío: GRATIS 🎉\n`;
+        } else {
+            message += `• Envío: $${shipping.toFixed(2)}\n`;
+        }
+        
+        message += `\n💰 *TOTAL FINAL: $${total.toFixed(2)}*\n\n`;
+        message += `📸 Las imágenes de los productos están en los enlaces de arriba.`;
+
         const whatsappUrl = `https://wa.me/59892190483?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
+
+        // Opcionalmente, limpiar el carrito después de enviar el pedido
+        if (confirm('Pedido enviado. ¿Deseas vaciar el carrito?')) {
+            cart = [];
+            updateCart();
+            cartModal.classList.remove('open');
+        }
     }
 
     // --- Lógica del Menú Móvil ---

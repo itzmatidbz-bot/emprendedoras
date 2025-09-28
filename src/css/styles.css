@@ -1,21 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 :root {
   --primary-color: #d1a3a4;
   --primary-dark: #b98b8c;
   --primary-light: #f5e6e8;
   --secondary-color: #f5e6e8;
-  --text-color: #333;
+  --accent-color: #9f7a7b;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --text-color: #2c3e50;
   --text-light: #666;
   --background-color: #fdfdfe;
   --white-color: #fff;
   --dark-color: #1a1a1a;
+  --gray-100: #f7f7f7;
+  --gray-200: #eee;
+  --gray-300: #ddd;
   --font-body: 'Montserrat', sans-serif;
   --font-heading: 'Playfair Display', serif;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
   --shadow: 0 5px 15px rgba(0,0,0,0.1);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+  --radius-sm: 4px;
   --radius: 8px;
+  --radius-lg: 16px;
   --transition: all 0.3s ease;
+  --max-width: 1400px;
 }
 
 /* --- Reset Básico --- */
@@ -43,16 +57,50 @@ body {
   padding: 0 1.5rem;
 }
 
+/* --- Promo Banner --- */
+.promo-banner {
+    background: linear-gradient(45deg, var(--primary-dark), var(--primary-color));
+    color: var(--white-color);
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 1001;
+}
+
+.promo-banner__content {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    text-align: center;
+}
+
+.promo-banner__content span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.promo-banner__content i {
+    color: var(--white-color);
+}
+
 /* --- Header y Navegación --- */
 .header {
-  background-color: var(--white-color);
-  box-shadow: var(--shadow);
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  transition: background-color 0.3s ease;
+    background-color: var(--white-color);
+    box-shadow: var(--shadow);
+    position: fixed;
+    top: 2.5rem;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.header.scrolled {
+    top: 0;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
 }
 
 .nav {
@@ -138,13 +186,140 @@ body {
 
 /* --- Hero Section --- */
 .hero {
-  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1611652022417-a55339f9b244?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--white-color);
-  position: relative;
+    background: url('https://images.unsplash.com/photo-1611652022417-a55339f9b244?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--white-color);
+    position: relative;
+    margin-top: -2.5rem;
+}
+
+.hero__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4));
+}
+
+.hero__content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    animation: fadeInUp 1.5s ease-out;
+}
+
+.hero__subtitle-top {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.hero__title {
+    font-size: 4.5rem;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero__subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero__features {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin: 2rem 0;
+}
+
+.hero .feature {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.hero .feature i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* --- Shipping Info Section --- */
+.shipping-info {
+    padding: 4rem 0;
+    background-color: var(--white-color);
+}
+
+.shipping-info__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.shipping-info__card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    transition: var(--transition);
+}
+
+.shipping-info__card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow);
+    background: var(--white-color);
+}
+
+.shipping-info__icon {
+    width: 70px;
+    height: 70px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+
+.shipping-info__icon i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.shipping-info__card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.shipping-info__card p {
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hero__content {
@@ -555,17 +730,49 @@ section {
 }
 
 .cart-modal__footer {
-  padding: 1.5rem;
-  border-top: 1px solid #eee;
-  background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    background-color: var(--gray-100);
 }
 
-.cart-modal__total {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+.cart-modal__summary {
+    background: var(--white-color);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.summary-line:last-child {
+    border-bottom: none;
+}
+
+.summary-line.discount {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.summary-line.free-shipping {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.summary-line.total {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 2px solid var(--gray-300);
 }
 
 .btn--primary {
