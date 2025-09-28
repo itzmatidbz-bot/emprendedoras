@@ -43,18 +43,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
         productDetailContainer.innerHTML = `
             <div class="product-detail">
-                <div class="product-detail__image">
-                    <img src="${currentProduct.imagen_url}" alt="${currentProduct.nombre}">
+                <div class="product-detail__gallery">
+                    <div class="product-detail__main-image">
+                        <img src="${currentProduct.imagen_url}" alt="${currentProduct.nombre}">
+                    </div>
+                    <div class="product-detail__features">
+                        <div class="feature">
+                            <i class="fas fa-medal"></i>
+                            <span>Calidad Premium</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-truck"></i>
+                            <span>Envío Seguro</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Garantía</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="product-detail__info">
-                    <span class="category">${currentProduct.categoria}</span>
-                    <h1>${currentProduct.nombre}</h1>
-                    <p class="description">${currentProduct.descripcion}</p>
-                    <div class="price">$${currentProduct.precio.toFixed(2)}</div>
-                    <button id="add-to-cart-btn" class="btn">Añadir al Carrito</button>
+                    <div class="product-detail__header">
+                        <span class="category">${currentProduct.categoria}</span>
+                        <h1>${currentProduct.nombre}</h1>
+                    </div>
+                    <div class="product-detail__price-box">
+                        <div class="price">$${currentProduct.precio.toFixed(2)}</div>
+                        <div class="stock">En Stock</div>
+                    </div>
+                    <div class="product-detail__description">
+                        <h3>Descripción del Producto</h3>
+                        <p>${currentProduct.descripcion}</p>
+                    </div>
+                    <div class="product-detail__actions">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus"><i class="fas fa-minus"></i></button>
+                            <input type="number" id="quantity-input" value="1" min="1" max="10">
+                            <button class="quantity-btn plus"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <button id="add-to-cart-btn" class="btn btn--primary">
+                            <i class="fas fa-shopping-cart"></i>
+                            Añadir al Carrito
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
+
+        // Configurar controles de cantidad
+        const quantityInput = document.getElementById('quantity-input');
+        const minusBtn = document.querySelector('.quantity-btn.minus');
+        const plusBtn = document.querySelector('.quantity-btn.plus');
+
+        minusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+
+        plusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue < 10) {
+                quantityInput.value = currentValue + 1;
+            }
+        });
+
+        // Cargar productos relacionados
+        loadRelatedProducts(currentProduct.categoria);
 
         document.getElementById('add-to-cart-btn').addEventListener('click', () => {
             if(currentProduct) {
@@ -136,19 +192,36 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCart();
     }
 
-    function checkout() {
+    async function checkout() {
         if (cart.length === 0) {
             alert("Tu carrito está vacío.");
             return;
         }
+
         let message = "¡Hola! Quisiera hacer el siguiente pedido:\n\n";
+        
+        // Agregamos cada producto con su información
         cart.forEach(item => {
-            message += `${item.quantity}x ${item.nombre} - $${(item.precio * item.quantity).toFixed(2)}\n`;
+            message += `🔹 *${item.nombre}*\n`;
+            message += `   • Cantidad: ${item.quantity}\n`;
+            message += `   • Precio unitario: $${item.precio.toFixed(2)}\n`;
+            message += `   • Subtotal: $${(item.precio * item.quantity).toFixed(2)}\n`;
+            message += `   • Ver producto: ${item.imagen_url}\n\n`;
         });
+
         const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        message += `\n*Total: $${total.toFixed(2)}*`;
+        message += `\n💰 *TOTAL: $${total.toFixed(2)}*\n\n`;
+        message += `📸 Las imágenes de los productos están en los enlaces de arriba.`;
+
         const whatsappUrl = `https://wa.me/59892190483?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
+
+        // Opcionalmente, limpiar el carrito después de enviar el pedido
+        if (confirm('Pedido enviado. ¿Deseas vaciar el carrito?')) {
+            cart = [];
+            updateCart();
+            cartModal.classList.remove('open');
+        }
     }
 
     // --- Event Listeners ---
@@ -171,6 +244,33 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCart();
         }
     });
+
+    // --- Cargar Productos Relacionados ---
+    async function loadRelatedProducts(categoria) {
+        const { data: relatedProducts, error } = await supabase
+            .from('productos')
+            .select('*')
+            .eq('categoria', categoria)
+            .neq('id', currentProduct.id)
+            .limit(4);
+
+        if (error) {
+            console.error('Error al cargar productos relacionados:', error);
+            return;
+        }
+
+        const relatedProductsContainer = document.getElementById('related-products-grid');
+        relatedProductsContainer.innerHTML = relatedProducts.map(product => `
+            <div class="product-card" onclick="window.location.href='producto.html?id=${product.id}'">
+                <img src="${product.imagen_url}" alt="${product.nombre}" class="product-card__image">
+                <div class="product-card__content">
+                    <span class="product-card__category">${product.categoria}</span>
+                    <h3 class="product-card__title">${product.nombre}</h3>
+                    <div class="product-card__price">$${product.precio.toFixed(2)}</div>
+                </div>
+            </div>
+        `).join('');
+    }
 
     // --- Inicialización ---
     loadProduct();
