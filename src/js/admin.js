@@ -2,6 +2,15 @@
 const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
 
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        storageKey: 'admin-auth',
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
+});
+
 // const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // (Eliminado porque ya está declarado al inicio del archivo)
 
@@ -48,17 +57,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // --- Verificación de Roles ---
 async function checkUserRole() {
-    const { data: { session } } = await supabaseCliente.auth.getSession();
-    if (!session) {
-        window.location.href = '/login.html';
-        return;
-    }
+    try {
+        const { data: { session }, error: sessionError } = await supabaseCliente.auth.getSession();
+        if (sessionError) throw sessionError;
 
-    const { data: profile, error } = await supabaseCliente
-        .from('perfiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+        if (!session) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // Subscribirse a cambios de sesión
+        supabaseCliente.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                window.location.href = '/login.html';
+            }
+        });
+
+        const { data: profile, error } = await supabaseCliente
+            .from('perfiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+        if (error) throw error;
+
+        if (!profile || profile.role !== 'admin') {
+            await supabaseCliente.auth.signOut();
+            window.location.href = '/login.html';
+            addNotification('Error', 'No tienes permisos de administrador', 'error');
+            return;
+        }
+
+    } catch (error) {
+        console.error('Error al verificar rol:', error);
+        window.location.href = '/login.html';
+    }
 
     if (error || !profile || profile.role !== 'admin') {
         await supabaseCliente.auth.signOut();
@@ -523,15 +556,7 @@ function switchSection(sectionName) {
     }
 }
 
-const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- Elementos del DOM ---
-const logoutButton = document.getElementById('logout-button');
-const productForm = document.getElementById('product-form');
-const submitButton = document.getElementById('submit-button');
-const imageUploadArea = document.getElementById('image-upload-area');
-const imageInput = document.getElementById('imagen');
-const imagePreview = document.getElementById('image-preview');
 
 // --- Lógica Principal ---
 document.addEventListener('DOMContentLoaded', () => {
