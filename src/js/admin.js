@@ -118,10 +118,19 @@ function setupEventListeners() {
         const sidebar = document.querySelector('.admin-sidebar');
         const overlay = document.querySelector('.sidebar-overlay');
 
-        if (menuToggle) {
+        if (menuToggle && sidebar && overlay) {
             menuToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                menuToggle.classList.toggle('active');
                 document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                document.body.style.overflow = '';
             });
         }
 
@@ -623,6 +632,8 @@ function handleFiles(files) {
 
 // --- Formulario de Nuevo Producto ---
 function setupProductForm() {
+    if (!elements.productForm) return;
+
     // Validación en tiempo real
     const inputs = elements.productForm.querySelectorAll('input, textarea');
     inputs.forEach(input => {
@@ -631,49 +642,55 @@ function setupProductForm() {
         });
     });
 
+    // Preview de imagen
+    elements.imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                elements.imagePreview.src = e.target.result;
+                elements.imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
     elements.productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        // Validar todos los campos antes de enviar
-        let isValid = true;
-        inputs.forEach(input => {
-            if (!validateInput(input)) {
-                isValid = false;
-            }
-        });
-
-        if (!isValid) {
-            addNotification('Error', 'Por favor, completa todos los campos correctamente', 'error');
-            return;
-        }
-
-        elements.submitButton.disabled = true;
-        elements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-        const file = elements.imageInput.files[0];
-        if (!file) {
-            addNotification('Error', 'Por favor, selecciona una imagen para el producto', 'error');
-            elements.submitButton.disabled = false;
-            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
-            return;
-        }
-
-        // Validar tamaño y tipo de imagen
-        if (file.size > 5 * 1024 * 1024) { // 5MB max
-            addNotification('Error', 'La imagen es demasiado grande. Máximo 5MB', 'error');
-            elements.submitButton.disabled = false;
-            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
-            return;
-        }
-
-        if (!file.type.startsWith('image/')) {
-            addNotification('Error', 'Por favor, selecciona un archivo de imagen válido', 'error');
-            elements.submitButton.disabled = false;
-            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
-            return;
-        }
-
         try {
+            // Validar todos los campos
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!validateInput(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                addNotification('Error', 'Por favor, completa todos los campos correctamente', 'error');
+                return;
+            }
+
+            elements.submitButton.disabled = true;
+            elements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+            const file = elements.imageInput.files[0];
+            if (!file) {
+                addNotification('Error', 'Por favor, selecciona una imagen para el producto', 'error');
+                elements.submitButton.disabled = false;
+                elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+                return;
+            }
+
+            // Validar imagen
+            if (file.size > 5 * 1024 * 1024) {
+                throw new Error('La imagen es demasiado grande. Máximo 5MB');
+            }
+
+            if (!file.type.startsWith('image/')) {
+                throw new Error('Por favor, selecciona un archivo de imagen válido');
+            }
+
             // Subir imagen
             const filePath = `public/${Date.now()}-${file.name}`;
             const { data: uploadData, error: uploadError } = await supabaseCliente.storage
@@ -711,15 +728,17 @@ function setupProductForm() {
             // Actualizar datos
             await loadProducts();
             await loadDashboardStats();
+            switchSection('products');
 
         } catch (error) {
-            addNotification('Error', `Error al guardar el producto: ${error.message}`, 'error');
+            console.error('Error al guardar producto:', error);
+            addNotification('Error', error.message || 'Error al guardar el producto', 'error');
         } finally {
             elements.submitButton.disabled = false;
             elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
         }
     });
-}
+} 
 
 // --- Eliminación de Productos ---
 function confirmDelete(id) {
