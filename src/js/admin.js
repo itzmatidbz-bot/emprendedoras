@@ -49,10 +49,16 @@ const elements = {
 
 // --- Inicialización ---
 document.addEventListener('DOMContentLoaded', async () => {
-    await checkUserRole();
-    await loadDashboardStats();
-    setupEventListeners();
-    await loadProducts();
+    try {
+        await checkUserRole();
+        setupEventListeners();
+        await loadDashboardStats();
+        await loadProducts();
+        addNotification('Éxito', 'Panel de administración cargado correctamente', 'success');
+    } catch (error) {
+        console.error('Error en la inicialización:', error);
+        addNotification('Error', 'Error al cargar el panel de administración', 'error');
+    }
 });
 
 // --- Verificación de Roles ---
@@ -103,107 +109,257 @@ async function checkUserRole() {
 
 // --- Configuración de Event Listeners ---
 function setupEventListeners() {
-    // Navegación
-    elements.navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            if (item.dataset.section) {
-                switchSection(item.dataset.section);
-            }
+    try {
+        console.log('Configurando event listeners...');
+
+        // Navegación
+        elements.navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (item.dataset.section) {
+                    switchSection(item.dataset.section);
+                }
+            });
         });
-    });
 
-    // Filtros
-    elements.searchInput.addEventListener('input', debounce(filterProducts, 300));
-    elements.categoryFilter.addEventListener('change', filterProducts);
-    elements.stockFilter.addEventListener('change', filterProducts);
+        // Panel de notificaciones
+        const notificationsIcon = document.querySelector('.notifications');
+        const notificationsPanel = document.getElementById('notifications-panel');
+        if (notificationsIcon && notificationsPanel) {
+            notificationsIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationsPanel.classList.toggle('show');
+            });
 
-    // Modales
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', () => {
-            elements.editModal.style.display = 'none';
-            elements.confirmModal.style.display = 'none';
+            document.addEventListener('click', (e) => {
+                if (!notificationsPanel.contains(e.target) && !notificationsIcon.contains(e.target)) {
+                    notificationsPanel.classList.remove('show');
+                }
+            });
+        }
+
+        // Filtros con debounce y validación
+        if (elements.searchInput) {
+            elements.searchInput.addEventListener('input', debounce(() => {
+                console.log('Buscando productos...');
+                filterProducts();
+            }, 300));
+        }
+
+        if (elements.categoryFilter) {
+            elements.categoryFilter.addEventListener('change', () => {
+                console.log('Filtrando por categoría...');
+                filterProducts();
+            });
+        }
+
+        if (elements.stockFilter) {
+            elements.stockFilter.addEventListener('change', () => {
+                console.log('Filtrando por stock...');
+                filterProducts();
+            });
+        }
+
+        // Modales con mejor manejo
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
         });
-    });
 
-    // Logout
-    elements.logoutButton.addEventListener('click', async () => {
-        await supabaseCliente.auth.signOut();
-        window.location.href = '/login.html';
-    });
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', () => {
+                const modal = closeBtn.closest('.modal');
+                if (modal) modal.style.display = 'none';
+            });
+        });
 
-    // Subida de imágenes
-    setupImageUpload();
+        // Logout con confirmación
+        if (elements.logoutButton) {
+            elements.logoutButton.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                    try {
+                        await supabaseCliente.auth.signOut();
+                        window.location.href = '/login.html';
+                    } catch (error) {
+                        console.error('Error al cerrar sesión:', error);
+                        addNotification('Error', 'Error al cerrar sesión', 'error');
+                    }
+                }
+            });
+        }
 
-    // Formulario de nuevo producto
-    setupProductForm();
+        // Subida de imágenes
+        setupImageUpload();
+
+        // Formulario de nuevo producto
+        setupProductForm();
+
+        console.log('Event listeners configurados correctamente');
+    } catch (error) {
+        console.error('Error al configurar event listeners:', error);
+        addNotification('Error', 'Error al configurar la interfaz', 'error');
+    }
 }
 
 // --- Dashboard Stats ---
 async function loadDashboardStats() {
-    const { data: products, error } = await supabaseCliente
-        .from('productos')
-        .select('*');
+    try {
+        console.log('Cargando estadísticas...');
+        const { data: products, error } = await supabaseCliente
+            .from('productos')
+            .select('*');
 
-    if (error) {
-        addNotification('Error', 'Error al cargar estadísticas', 'error');
-        return;
+        if (error) throw error;
+
+        if (!products) {
+            console.log('No se encontraron productos');
+            elements.totalProducts.textContent = '0';
+            elements.lowStock.textContent = '0';
+            elements.totalCategories.textContent = '0';
+            return;
+        }
+
+        console.log('Productos cargados:', products.length);
+
+        const stats = {
+            total: products.length,
+            lowStock: products.filter(p => p.stock < 5).length,
+            categories: new Set(products.map(p => p.categoria)).size
+        };
+
+        elements.totalProducts.textContent = stats.total;
+        elements.lowStock.textContent = stats.lowStock;
+        elements.totalCategories.textContent = stats.categories;
+
+        console.log('Estadísticas actualizadas:', stats);
+    } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+        addNotification('Error', 'Error al cargar las estadísticas', 'error');
+        elements.totalProducts.textContent = '0';
+        elements.lowStock.textContent = '0';
+        elements.totalCategories.textContent = '0';
     }
-
-    const stats = {
-        total: products.length,
-        lowStock: products.filter(p => p.stock < 5).length,
-        categories: new Set(products.map(p => p.categoria)).size
-    };
-
-    elements.totalProducts.textContent = stats.total;
-    elements.lowStock.textContent = stats.lowStock;
-    elements.totalCategories.textContent = stats.categories;
 }
 
 // --- Gestión de Productos ---
 async function loadProducts() {
-    const { data: products, error } = await supabaseCliente
-        .from('productos')
-        .select('*')
-        .order('id', { ascending: true });
+    try {
+        console.log('Cargando productos...');
+        const { data: products, error } = await supabaseCliente
+            .from('productos')
+            .select('*')
+            .order('id', { ascending: true });
 
-    if (error) {
-        addNotification('Error', 'Error al cargar productos', 'error');
-        return;
+        if (error) throw error;
+
+        if (!products || products.length === 0) {
+            console.log('No se encontraron productos');
+            elements.productsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">No hay productos disponibles</td>
+                </tr>
+            `;
+            categories = new Set();
+            updateCategoryFilter();
+            return;
+        }
+
+        console.log('Productos encontrados:', products.length);
+
+        // Actualizar categorías
+        categories = new Set(products.map(p => p.categoria));
+        updateCategoryFilter();
+
+        // Renderizar productos
+        renderProducts(products);
+        
+        console.log('Productos cargados exitosamente');
+    } catch (error) {
+        console.error('Error al cargar productos:', error);
+        addNotification('Error', 'Error al cargar los productos', 'error');
+        elements.productsTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">Error al cargar los productos</td>
+            </tr>
+        `;
     }
-
-    // Actualizar categorías
-    categories = new Set(products.map(p => p.categoria));
-    updateCategoryFilter();
-
-    // Renderizar productos
-    renderProducts(products);
 }
 
 function renderProducts(products) {
-    elements.productsTableBody.innerHTML = '';
-    
-    products.forEach(product => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <img src="${product.imagen_url}" alt="${product.nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-            </td>
-            <td>${product.nombre}</td>
-            <td>${product.categoria}</td>
-            <td>$${product.precio.toFixed(2)}</td>
-            <td class="${product.stock < 5 ? 'text-danger' : ''}">${product.stock}</td>
-            <td>
-                <button class="btn" onclick="editProduct(${product.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn danger" onclick="confirmDelete(${product.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
+    try {
+        if (!Array.isArray(products)) {
+            console.error('Los productos no son un array:', products);
+            throw new Error('Formato de datos inválido');
+        }
+
+        elements.productsTableBody.innerHTML = '';
+        
+        if (products.length === 0) {
+            elements.productsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">No hay productos disponibles</td>
+                </tr>
+            `;
+            return;
+        }
+
+        products.forEach(product => {
+            if (!product || !product.id) {
+                console.warn('Producto inválido:', product);
+                return;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <img src="${product.imagen_url || '/placeholder.jpg'}" 
+                         alt="${product.nombre || 'Producto'}" 
+                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;"
+                         onerror="this.src='/placeholder.jpg'">
+                </td>
+                <td>${product.nombre || 'Sin nombre'}</td>
+                <td>${product.categoria || 'Sin categoría'}</td>
+                <td>$${(product.precio || 0).toFixed(2)}</td>
+                <td class="${(product.stock || 0) < 5 ? 'text-danger' : ''}">                    ${product.stock || 0}
+                </td>
+                <td>
+                    <button class="btn btn-edit" onclick="event.preventDefault(); editProduct(${product.id});">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-delete" onclick="event.preventDefault(); confirmDelete(${product.id});">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            elements.productsTableBody.appendChild(row);
+        });
+
+        // Agregar event listeners para los botones
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+
+    } catch (error) {
+        console.error('Error al renderizar productos:', error);
+        addNotification('Error', 'Error al mostrar los productos', 'error');
+        elements.productsTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">Error al mostrar los productos</td>
+            </tr>
         `;
-        elements.productsTableBody.appendChild(row);
-    });
+    }
 }
 
 function updateCategoryFilter() {
@@ -214,40 +370,53 @@ function updateCategoryFilter() {
 }
 
 async function filterProducts() {
-    const searchTerm = elements.searchInput.value.toLowerCase();
-    const categoryFilter = elements.categoryFilter.value;
-    const stockFilter = elements.stockFilter.value;
+    try {
+        const searchTerm = elements.searchInput?.value.toLowerCase() || '';
+        const categoryFilter = elements.categoryFilter?.value || '';
+        const stockFilter = elements.stockFilter?.value || '';
 
-    const { data: products, error } = await supabaseCliente
-        .from('productos')
-        .select('*');
+        console.log('Aplicando filtros:', { searchTerm, categoryFilter, stockFilter });
 
-    if (error) {
-        addNotification('Error', 'Error al filtrar productos', 'error');
-        return;
+        const { data: products, error } = await supabaseCliente
+            .from('productos')
+            .select('*');
+
+        if (error) throw error;
+
+        if (!products) {
+            console.log('No se encontraron productos para filtrar');
+            renderProducts([]);
+            return;
+        }
+
+        let filtered = [...products];
+
+        // Aplicar filtros de forma segura
+        if (searchTerm) {
+            filtered = filtered.filter(p => 
+                (p.nombre?.toLowerCase() || '').includes(searchTerm) ||
+                (p.descripcion?.toLowerCase() || '').includes(searchTerm)
+            );
+        }
+
+        if (categoryFilter) {
+            filtered = filtered.filter(p => p.categoria === categoryFilter);
+        }
+
+        if (stockFilter === 'low') {
+            filtered = filtered.filter(p => (p.stock || 0) < 5);
+        } else if (stockFilter === 'out') {
+            filtered = filtered.filter(p => (p.stock || 0) === 0);
+        }
+
+        console.log(`Productos filtrados: ${filtered.length} de ${products.length}`);
+        renderProducts(filtered);
+
+    } catch (error) {
+        console.error('Error al filtrar productos:', error);
+        addNotification('Error', 'Error al filtrar los productos', 'error');
+        renderProducts([]);
     }
-
-    let filtered = products;
-
-    // Aplicar filtros
-    if (searchTerm) {
-        filtered = filtered.filter(p => 
-            p.nombre.toLowerCase().includes(searchTerm) ||
-            p.descripcion.toLowerCase().includes(searchTerm)
-        );
-    }
-
-    if (categoryFilter) {
-        filtered = filtered.filter(p => p.categoria === categoryFilter);
-    }
-
-    if (stockFilter === 'low') {
-        filtered = filtered.filter(p => p.stock < 5);
-    } else if (stockFilter === 'out') {
-        filtered = filtered.filter(p => p.stock === 0);
-    }
-
-    renderProducts(filtered);
 }
 
 // --- Edición de Productos ---
@@ -581,26 +750,51 @@ function debounce(func, wait) {
 }
 
 function switchSection(sectionName) {
-    Object.values(sections).forEach(section => {
-        section.classList.remove('active');
-    });
-    sections[sectionName].classList.add('active');
-    
-    elements.navItems.forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.section === sectionName) {
-            item.classList.add('active');
+    try {
+        console.log('Cambiando a sección:', sectionName);
+        
+        if (!sections[sectionName]) {
+            console.error('Sección no encontrada:', sectionName);
+            return;
         }
-    });
 
-    currentSection = sectionName;
-    
-    if (sectionName === 'products') {
-        loadProducts();
-    } else if (sectionName === 'dashboard') {
-        loadDashboardStats();
+        // Ocultar todas las secciones
+        Object.values(sections).forEach(section => {
+            section.classList.remove('active');
+            section.style.display = 'none';
+        });
+
+        // Mostrar la sección seleccionada
+        sections[sectionName].classList.add('active');
+        sections[sectionName].style.display = 'block';
+        
+        // Actualizar navegación
+        elements.navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.section === sectionName) {
+                item.classList.add('active');
+            }
+        });
+
+        currentSection = sectionName;
+        
+        // Cargar datos según la sección
+        if (sectionName === 'products') {
+            loadProducts().catch(error => {
+                console.error('Error al cargar productos:', error);
+                addNotification('Error', 'Error al cargar los productos', 'error');
+            });
+        } else if (sectionName === 'dashboard') {
+            loadDashboardStats().catch(error => {
+                console.error('Error al cargar estadísticas:', error);
+                addNotification('Error', 'Error al cargar las estadísticas', 'error');
+            });
+        }
+
+        console.log('Sección cambiada exitosamente a:', sectionName);
+} catch (error) {
+        console.error('Error al cambiar sección:', error);
+        addNotification('Error', 'Error al cambiar de sección', 'error');
     }
-}
-
-
+}   
 
