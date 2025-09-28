@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- Verificación de Roles ---
 async function checkUserRole() {
     try {
+        // Verificar sesión
         const { data: { session }, error: sessionError } = await supabaseCliente.auth.getSession();
         if (sessionError) throw sessionError;
 
@@ -79,13 +80,14 @@ async function checkUserRole() {
             }
         });
 
-        const { data: profile, error } = await supabaseCliente
+        // Verificar rol de administrador
+        const { data: profile, error: profileError } = await supabaseCliente
             .from('perfiles')
             .select('role')
             .eq('id', session.user.id)
             .single();
 
-        if (error) throw error;
+        if (profileError) throw profileError;
 
         if (!profile || profile.role !== 'admin') {
             await supabaseCliente.auth.signOut();
@@ -94,16 +96,15 @@ async function checkUserRole() {
             return;
         }
 
+        console.log('Rol de administrador verificado correctamente');
+        return true;
+
     } catch (error) {
         console.error('Error al verificar rol:', error);
-        window.location.href = '/login.html';
-    }
-
-    if (error || !profile || profile.role !== 'admin') {
         await supabaseCliente.auth.signOut();
         window.location.href = '/login.html';
-        addNotification('Error', 'No tienes permisos de administrador', 'error');
-        return;
+        addNotification('Error', 'Error de autenticación', 'error');
+        return false;
     }
 }
 
