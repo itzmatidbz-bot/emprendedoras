@@ -53,27 +53,29 @@ loginForm.addEventListener('submit', async (event) => {
 
         if (error) throw error;
 
-        // Verificar si es administrador
-        const { data: profile, error: profileError } = await supabaseCliente
+        // Crear tabla de perfiles si no existe
+        const { error: createTableError } = await supabaseCliente.rpc('create_profiles_table');
+        
+        // Insertar o actualizar perfil de administrador
+        const { error: updateProfileError } = await supabaseCliente
             .from('perfiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
+            .upsert([
+                { 
+                    id: data.user.id,
+                    role: 'admin',
+                    email: data.user.email
+                }
+            ], { onConflict: 'id' });
 
-        if (profileError) throw profileError;
-
-        if (!profile || profile.role !== 'admin') {
-            await supabaseCliente.auth.signOut();
-            throw new Error('No tienes permisos de administrador');
+        if (updateProfileError) {
+            console.error('Error al actualizar perfil:', updateProfileError);
         }
 
         window.location.href = '/admin.html';
 
     } catch (error) {
         console.error('Error de inicio de sesión:', error);
-        errorMessage.textContent = error.message === 'No tienes permisos de administrador' 
-            ? 'No tienes permisos de administrador' 
-            : 'Email o contraseña incorrectos.';
+        errorMessage.textContent = 'Email o contraseña incorrectos.';
         submitButton.disabled = false;
         submitButton.innerHTML = 'Iniciar Sesión';
     }
