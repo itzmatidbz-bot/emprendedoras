@@ -35,14 +35,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Limpiar mensaje de error cuando el usuario empiece a escribir
+document.getElementById('email').addEventListener('input', () => {
+    errorMessage.textContent = '';
+    errorMessage.classList.remove('show');
+});
+
+document.getElementById('password').addEventListener('input', () => {
+    errorMessage.textContent = '';
+    errorMessage.classList.remove('show');
+});
+
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
-    const submitButton = loginForm.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando sesión...';
-
-    try {
+        const submitButton = document.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Iniciando sesión...</span>';    try {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
@@ -76,8 +85,9 @@ loginForm.addEventListener('submit', async (event) => {
     } catch (error) {
         console.error('Error de inicio de sesión:', error);
         errorMessage.textContent = 'Email o contraseña incorrectos.';
+        errorMessage.classList.add('show');
         submitButton.disabled = false;
-        submitButton.innerHTML = 'Iniciar Sesión';
+        submitButton.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Iniciar Sesión</span>';
     }
 });
 // CORREGIDO: Se eliminó una llave "}" extra que había aquí
