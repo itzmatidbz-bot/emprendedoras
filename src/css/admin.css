@@ -379,6 +379,35 @@
     animation: fadeIn 0.3s ease;
 }
 
+/* Sección de Productos */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.product-form-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: var(--admin-shadow);
+    margin-bottom: 2rem;
+}
+
+.product-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.no-products {
+    text-align: center;
+    padding: 2rem;
+    color: var(--admin-gray);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

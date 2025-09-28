@@ -49,16 +49,14 @@ const elements = {
 
 // --- Inicialización ---
 document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        await checkUserRole();
-        setupEventListeners();
-        await loadDashboardStats();
-        await loadProducts();
-        addNotification('Éxito', 'Panel de administración cargado correctamente', 'success');
-    } catch (error) {
-        console.error('Error en la inicialización:', error);
-        addNotification('Error', 'Error al cargar el panel de administración', 'error');
-    }
+    await checkSession();
+    setupEventListeners();
+    setupProductForm();
+    setupImageUpload();
+    await loadDashboardStats();
+    await loadProducts();
+    setupMobileMenu();
+    setupNewProductButton();
 });
 
 // --- Verificación de Roles ---
