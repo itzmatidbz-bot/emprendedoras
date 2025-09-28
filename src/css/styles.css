@@ -2,15 +2,20 @@
 
 :root {
   --primary-color: #d1a3a4;
+  --primary-dark: #b98b8c;
+  --primary-light: #f5e6e8;
   --secondary-color: #f5e6e8;
   --text-color: #333;
+  --text-light: #666;
   --background-color: #fdfdfe;
   --white-color: #fff;
   --dark-color: #1a1a1a;
   --font-body: 'Montserrat', sans-serif;
   --font-heading: 'Playfair Display', serif;
   --shadow: 0 5px 15px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
   --radius: 8px;
+  --transition: all 0.3s ease;
 }
 
 /* --- Reset Básico --- */
@@ -133,12 +138,85 @@ body {
 
 /* --- Hero Section --- */
 .hero {
-  background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), url('https://images.unsplash.com/photo-1611652022417-a55339f9b244?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1611652022417-a55339f9b244?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
   height: 100vh;
   display: flex;
   align-items: center;
   text-align: center;
   color: var(--white-color);
+  position: relative;
+}
+
+.hero__content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  animation: fadeIn 1s ease-out;
+}
+
+.hero__features {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.feature i {
+  color: var(--primary-color);
+}
+
+/* --- Benefits Section --- */
+.benefits {
+  padding: 6rem 0;
+  background-color: var(--white-color);
+}
+
+.benefits__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.benefit-card {
+  text-align: center;
+  padding: 2rem;
+  background: var(--white-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.benefit-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+}
+
+.benefit-card i {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.benefit-card h3 {
+  font-family: var(--font-heading);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.benefit-card p {
+  color: var(--text-light);
 }
 
 .hero__title {
@@ -243,10 +321,121 @@ section {
   margin-top: auto;
 }
 
-/* --- Contacto --- */
+/* --- Testimonials Section --- */
+.testimonials {
+    padding: 6rem 0;
+    background-color: var(--secondary-color);
+}
+
+.testimonials__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.testimonial-card {
+    background: var(--white-color);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.testimonial-card__avatar {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary-color);
+}
+
+.testimonial-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.testimonial-card__text {
+    font-style: italic;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.testimonial-card__name {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* --- Contact Section --- */
 .contact {
     text-align: center;
-    background-color: var(--secondary-color);
+    background-color: var(--white-color);
+    padding: 6rem 0;
+}
+
+.contact__content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 4rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.contact__info h3,
+.contact__social h3 {
+    font-family: var(--font-heading);
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
+.contact__methods {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn--whatsapp {
+    background-color: #25D366;
+}
+
+.btn--email {
+    background-color: var(--primary-color);
+}
+
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.social-link {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: var(--transition);
+}
+
+.social-link:hover {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    transform: translateY(-3px);
 }
 
 /* --- Footer --- */
@@ -511,8 +700,41 @@ section {
     object-fit: cover;
 }
 
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- ESTILOS RESPONSIVE --- */
 @media screen and (max-width: 768px) {
+    .hero__content {
+        padding: 1.5rem;
+    }
+
+    .hero__features {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .feature {
+        justify-content: center;
+    }
+
+    .benefits__grid,
+    .testimonials__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact__content {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .contact__methods {
+        flex-direction: column;
+    }
+
     .nav__menu {
         position: fixed;
         top: 0;
