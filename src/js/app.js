@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             noResultsMessage.style.display = 'none';
         }
+
+        // Aplicar animaciones con retraso
+        products.forEach((product, index) => {
         
         products.forEach(product => {
             const card = document.createElement('div');
@@ -79,8 +82,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = `producto.html?id=${product.id}`;
             });
             
+            card.style.animationDelay = `${index * 0.1}s`;
             productGrid.appendChild(card);
         });
+
+        // Animar elementos al hacer scroll
+        const animateOnScroll = () => {
+            const elements = document.querySelectorAll('.shipping-info__card, .product-card');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                if (elementTop < windowHeight * 0.85) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        };
+
+        // Inicializar elementos con opacidad 0
+        document.querySelectorAll('.shipping-info__card, .product-card').forEach(element => {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(20px)';
+            element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        });
+
+        // Agregar listener para animar al hacer scroll
+        window.addEventListener('scroll', animateOnScroll);
+        // Ejecutar una vez para elementos visibles inicialmente
+        animateOnScroll();
     }
 
     // --- Lógica de Filtros ---
