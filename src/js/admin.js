@@ -113,12 +113,37 @@ function setupEventListeners() {
     try {
         console.log('Configurando event listeners...');
 
+        // Menú móvil
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+        }
+
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                e.target !== menuToggle) {
+                sidebar.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
         // Navegación
         elements.navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (item.dataset.section) {
                     switchSection(item.dataset.section);
+                    // Cerrar menú móvil al navegar
+                    sidebar.classList.remove('active');
+                    document.body.style.overflow = '';
                 }
             });
         });
@@ -250,6 +275,14 @@ async function loadDashboardStats() {
 async function loadProducts() {
     try {
         console.log('Cargando productos...');
+        elements.productsTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+                </td>
+            </tr>
+        `;
+
         const { data: products, error } = await supabaseCliente
             .from('productos')
             .select('*')
@@ -261,7 +294,15 @@ async function loadProducts() {
             console.log('No se encontraron productos');
             elements.productsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center">No hay productos disponibles</td>
+                    <td colspan="6" class="text-center">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open fa-3x"></i>
+                            <p>No hay productos disponibles</p>
+                            <button class="btn primary" onclick="switchSection('new-product')">
+                                <i class="fas fa-plus"></i> Agregar Producto
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `;
             categories = new Set();
@@ -271,9 +312,10 @@ async function loadProducts() {
 
         console.log('Productos encontrados:', products.length);
 
-        // Actualizar categorías
+        // Actualizar categorías y estadísticas
         categories = new Set(products.map(p => p.categoria));
         updateCategoryFilter();
+        await loadDashboardStats(); // Actualizar estadísticas
 
         // Renderizar productos
         renderProducts(products);
@@ -581,14 +623,51 @@ function handleFiles(files) {
 
 // --- Formulario de Nuevo Producto ---
 function setupProductForm() {
+    // Validación en tiempo real
+    const inputs = elements.productForm.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            validateInput(input);
+        });
+    });
+
     elements.productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Validar todos los campos antes de enviar
+        let isValid = true;
+        inputs.forEach(input => {
+            if (!validateInput(input)) {
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            addNotification('Error', 'Por favor, completa todos los campos correctamente', 'error');
+            return;
+        }
+
         elements.submitButton.disabled = true;
         elements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         const file = elements.imageInput.files[0];
         if (!file) {
             addNotification('Error', 'Por favor, selecciona una imagen para el producto', 'error');
+            elements.submitButton.disabled = false;
+            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+            return;
+        }
+
+        // Validar tamaño y tipo de imagen
+        if (file.size > 5 * 1024 * 1024) { // 5MB max
+            addNotification('Error', 'La imagen es demasiado grande. Máximo 5MB', 'error');
+            elements.submitButton.disabled = false;
+            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            addNotification('Error', 'Por favor, selecciona un archivo de imagen válido', 'error');
             elements.submitButton.disabled = false;
             elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
             return;
@@ -738,6 +817,67 @@ function updateNotifications() {
 }
 
 // --- Utilidades ---
+function validateInput(input) {
+    let isValid = true;
+    const value = input.value.trim();
+
+    // Remover mensajes de error anteriores
+    const errorMsg = input.parentElement.querySelector('.error-message');
+    if (errorMsg) errorMsg.remove();
+
+    // Validaciones según el tipo de input
+    switch(input.id) {
+        case 'nombre':
+        case 'edit-nombre':
+            if (value.length < 3) {
+                showError(input, 'El nombre debe tener al menos 3 caracteres');
+                isValid = false;
+            }
+            break;
+        case 'precio':
+        case 'edit-precio':
+            if (isNaN(value) || parseFloat(value) <= 0) {
+                showError(input, 'Ingresa un precio válido mayor a 0');
+                isValid = false;
+            }
+            break;
+        case 'stock':
+        case 'edit-stock':
+            if (!Number.isInteger(parseFloat(value)) || parseInt(value) < 0) {
+                showError(input, 'Ingresa una cantidad válida (número entero)');
+                isValid = false;
+            }
+            break;
+        case 'categoria':
+        case 'edit-categoria':
+            if (value.length < 2) {
+                showError(input, 'Ingresa una categoría válida');
+                isValid = false;
+            }
+            break;
+        case 'descripcion':
+        case 'edit-descripcion':
+            if (value.length < 10) {
+                showError(input, 'La descripción debe tener al menos 10 caracteres');
+                isValid = false;
+            }
+            break;
+    }
+
+    // Actualizar estilo del input
+    input.classList.toggle('is-invalid', !isValid);
+    input.classList.toggle('is-valid', isValid);
+
+    return isValid;
+}
+
+function showError(input, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    input.parentElement.appendChild(errorDiv);
+}
+
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
