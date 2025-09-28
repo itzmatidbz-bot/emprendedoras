@@ -2,15 +2,6 @@
 const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
 
-const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storageKey: 'admin-auth',
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    }
-});
-
 // const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // (Eliminado porque ya está declarado al inicio del archivo)
 
@@ -42,374 +33,144 @@ const elements = {
     productForm: document.getElementById('product-form'),
     submitButton: document.getElementById('submit-button'),
     imageUploadArea: document.getElementById('image-upload-area'),
-    imageInput: document.querySelector('#imagen'),
+    imageInput: document.getElementById('imagen'),
     imagePreview: document.getElementById('image-preview'),
     logoutButton: document.getElementById('logout-button')
 };
 
 // --- Inicialización ---
 document.addEventListener('DOMContentLoaded', async () => {
-    await checkSession();
-    setupEventListeners();
-    setupProductForm();
-    setupImageUpload();
+    await checkUserRole();
     await loadDashboardStats();
+    setupEventListeners();
     await loadProducts();
-    setupMobileMenu();
-    setupNewProductButton();
 });
 
 // --- Verificación de Roles ---
 async function checkUserRole() {
-    try {
-        // Verificar sesión
-        const { data: { session }, error: sessionError } = await supabaseCliente.auth.getSession();
-        if (sessionError) throw sessionError;
+    const { data: { session } } = await supabaseCliente.auth.getSession();
+    if (!session) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-        if (!session) {
-            window.location.href = '/login.html';
-            return;
-        }
+    const { data: profile, error } = await supabaseCliente
+        .from('perfiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
 
-        // Subscribirse a cambios de sesión
-        supabaseCliente.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_OUT' || !session) {
-                window.location.href = '/login.html';
-            }
-        });
-
-        // Verificar rol de administrador
-        const { data: profile, error: profileError } = await supabaseCliente
-            .from('perfiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-
-        if (profileError) throw profileError;
-
-        if (!profile || profile.role !== 'admin') {
-            await supabaseCliente.auth.signOut();
-            window.location.href = '/login.html';
-            addNotification('Error', 'No tienes permisos de administrador', 'error');
-            return;
-        }
-
-        console.log('Rol de administrador verificado correctamente');
-        return true;
-
-    } catch (error) {
-        console.error('Error al verificar rol:', error);
+    if (error || !profile || profile.role !== 'admin') {
         await supabaseCliente.auth.signOut();
         window.location.href = '/login.html';
-        addNotification('Error', 'Error de autenticación', 'error');
-        return false;
+        addNotification('Error', 'No tienes permisos de administrador', 'error');
+        return;
     }
 }
 
 // --- Configuración de Event Listeners ---
 function setupEventListeners() {
-    try {
-        console.log('Configurando event listeners...');
-
-        // Menú móvil
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.admin-sidebar');
-        const overlay = document.querySelector('.sidebar-overlay');
-
-        if (menuToggle && sidebar && overlay) {
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-                menuToggle.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
-            });
-
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                menuToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        }
-
-        // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('active') && 
-                !sidebar.contains(e.target) && 
-                e.target !== menuToggle) {
-                sidebar.classList.remove('active');
-                document.body.style.overflow = '';
+    // Navegación
+    elements.navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.section) {
+                switchSection(item.dataset.section);
             }
         });
+    });
 
-        // Navegación
-        elements.navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (item.dataset.section) {
-                    switchSection(item.dataset.section);
-                    // Cerrar menú móvil al navegar
-                    sidebar.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
+    // Filtros
+    elements.searchInput.addEventListener('input', debounce(filterProducts, 300));
+    elements.categoryFilter.addEventListener('change', filterProducts);
+    elements.stockFilter.addEventListener('change', filterProducts);
+
+    // Modales
+    document.querySelectorAll('.close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            elements.editModal.style.display = 'none';
+            elements.confirmModal.style.display = 'none';
         });
+    });
 
-        // Panel de notificaciones
-        const notificationsIcon = document.querySelector('.notifications');
-        const notificationsPanel = document.getElementById('notifications-panel');
-        if (notificationsIcon && notificationsPanel) {
-            notificationsIcon.addEventListener('click', (e) => {
-                e.stopPropagation();
-                notificationsPanel.classList.toggle('show');
-            });
+    // Logout
+    elements.logoutButton.addEventListener('click', async () => {
+        await supabaseCliente.auth.signOut();
+        window.location.href = '/login.html';
+    });
 
-            document.addEventListener('click', (e) => {
-                if (!notificationsPanel.contains(e.target) && !notificationsIcon.contains(e.target)) {
-                    notificationsPanel.classList.remove('show');
-                }
-            });
-        }
+    // Subida de imágenes
+    setupImageUpload();
 
-        // Filtros con debounce y validación
-        if (elements.searchInput) {
-            elements.searchInput.addEventListener('input', debounce(() => {
-                console.log('Buscando productos...');
-                filterProducts();
-            }, 300));
-        }
-
-        if (elements.categoryFilter) {
-            elements.categoryFilter.addEventListener('change', () => {
-                console.log('Filtrando por categoría...');
-                filterProducts();
-            });
-        }
-
-        if (elements.stockFilter) {
-            elements.stockFilter.addEventListener('change', () => {
-                console.log('Filtrando por stock...');
-                filterProducts();
-            });
-        }
-
-        // Modales con mejor manejo
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        });
-
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', () => {
-                const modal = closeBtn.closest('.modal');
-                if (modal) modal.style.display = 'none';
-            });
-        });
-
-        // Logout con confirmación
-        if (elements.logoutButton) {
-            elements.logoutButton.addEventListener('click', async (e) => {
-                e.preventDefault();
-                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-                    try {
-                        await supabaseCliente.auth.signOut();
-                        window.location.href = '/login.html';
-                    } catch (error) {
-                        console.error('Error al cerrar sesión:', error);
-                        addNotification('Error', 'Error al cerrar sesión', 'error');
-                    }
-                }
-            });
-        }
-
-        // Subida de imágenes
-        setupImageUpload();
-
-        // Formulario de nuevo producto
-        setupProductForm();
-
-        console.log('Event listeners configurados correctamente');
-    } catch (error) {
-        console.error('Error al configurar event listeners:', error);
-        addNotification('Error', 'Error al configurar la interfaz', 'error');
-    }
+    // Formulario de nuevo producto
+    setupProductForm();
 }
 
 // --- Dashboard Stats ---
 async function loadDashboardStats() {
-    try {
-        console.log('Cargando estadísticas...');
-        const { data: products, error } = await supabaseCliente
-            .from('productos')
-            .select('*');
+    const { data: products, error } = await supabaseCliente
+        .from('productos')
+        .select('*');
 
-        if (error) throw error;
-
-        if (!products) {
-            console.log('No se encontraron productos');
-            elements.totalProducts.textContent = '0';
-            elements.lowStock.textContent = '0';
-            elements.totalCategories.textContent = '0';
-            return;
-        }
-
-        console.log('Productos cargados:', products.length);
-
-        const stats = {
-            total: products.length,
-            lowStock: products.filter(p => p.stock < 5).length,
-            categories: new Set(products.map(p => p.categoria)).size
-        };
-
-        elements.totalProducts.textContent = stats.total;
-        elements.lowStock.textContent = stats.lowStock;
-        elements.totalCategories.textContent = stats.categories;
-
-        console.log('Estadísticas actualizadas:', stats);
-    } catch (error) {
-        console.error('Error al cargar estadísticas:', error);
-        addNotification('Error', 'Error al cargar las estadísticas', 'error');
-        elements.totalProducts.textContent = '0';
-        elements.lowStock.textContent = '0';
-        elements.totalCategories.textContent = '0';
+    if (error) {
+        addNotification('Error', 'Error al cargar estadísticas', 'error');
+        return;
     }
+
+    const stats = {
+        total: products.length,
+        lowStock: products.filter(p => p.stock < 5).length,
+        categories: new Set(products.map(p => p.categoria)).size
+    };
+
+    elements.totalProducts.textContent = stats.total;
+    elements.lowStock.textContent = stats.lowStock;
+    elements.totalCategories.textContent = stats.categories;
 }
 
 // --- Gestión de Productos ---
 async function loadProducts() {
-    try {
-        console.log('Cargando productos...');
-        elements.productsTableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center">
-                    <i class="fas fa-spinner fa-spin"></i> Cargando productos...
-                </td>
-            </tr>
-        `;
+    const { data: products, error } = await supabaseCliente
+        .from('productos')
+        .select('*')
+        .order('id', { ascending: true });
 
-        const { data: products, error } = await supabaseCliente
-            .from('productos')
-            .select('*')
-            .order('id', { ascending: true });
-
-        if (error) throw error;
-
-        if (!products || products.length === 0) {
-            console.log('No se encontraron productos');
-            elements.productsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        <div class="empty-state">
-                            <i class="fas fa-box-open fa-3x"></i>
-                            <p>No hay productos disponibles</p>
-                            <button class="btn primary" onclick="switchSection('new-product')">
-                                <i class="fas fa-plus"></i> Agregar Producto
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            categories = new Set();
-            updateCategoryFilter();
-            return;
-        }
-
-        console.log('Productos encontrados:', products.length);
-
-        // Actualizar categorías y estadísticas
-        categories = new Set(products.map(p => p.categoria));
-        updateCategoryFilter();
-        await loadDashboardStats(); // Actualizar estadísticas
-
-        // Renderizar productos
-        renderProducts(products);
-        
-        console.log('Productos cargados exitosamente');
-    } catch (error) {
-        console.error('Error al cargar productos:', error);
-        addNotification('Error', 'Error al cargar los productos', 'error');
-        elements.productsTableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center">Error al cargar los productos</td>
-            </tr>
-        `;
+    if (error) {
+        addNotification('Error', 'Error al cargar productos', 'error');
+        return;
     }
+
+    // Actualizar categorías
+    categories = new Set(products.map(p => p.categoria));
+    updateCategoryFilter();
+
+    // Renderizar productos
+    renderProducts(products);
 }
 
 function renderProducts(products) {
-    try {
-        if (!Array.isArray(products)) {
-            console.error('Los productos no son un array:', products);
-            throw new Error('Formato de datos inválido');
-        }
-
-        elements.productsTableBody.innerHTML = '';
-        
-        if (products.length === 0) {
-            elements.productsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">No hay productos disponibles</td>
-                </tr>
-            `;
-            return;
-        }
-
-        products.forEach(product => {
-            if (!product || !product.id) {
-                console.warn('Producto inválido:', product);
-                return;
-            }
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <img src="${product.imagen_url || '/placeholder.jpg'}" 
-                         alt="${product.nombre || 'Producto'}" 
-                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;"
-                         onerror="this.src='/placeholder.jpg'">
-                </td>
-                <td>${product.nombre || 'Sin nombre'}</td>
-                <td>${product.categoria || 'Sin categoría'}</td>
-                <td>$${(product.precio || 0).toFixed(2)}</td>
-                <td class="${(product.stock || 0) < 5 ? 'text-danger' : ''}">                    ${product.stock || 0}
-                </td>
-                <td>
-                    <button class="btn btn-edit" onclick="event.preventDefault(); editProduct(${product.id});">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-delete" onclick="event.preventDefault(); confirmDelete(${product.id});">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            elements.productsTableBody.appendChild(row);
-        });
-
-        // Agregar event listeners para los botones
-        document.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        });
-
-    } catch (error) {
-        console.error('Error al renderizar productos:', error);
-        addNotification('Error', 'Error al mostrar los productos', 'error');
-        elements.productsTableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center">Error al mostrar los productos</td>
-            </tr>
+    elements.productsTableBody.innerHTML = '';
+    
+    products.forEach(product => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <img src="${product.imagen_url}" alt="${product.nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+            </td>
+            <td>${product.nombre}</td>
+            <td>${product.categoria}</td>
+            <td>$${product.precio.toFixed(2)}</td>
+            <td class="${product.stock < 5 ? 'text-danger' : ''}">${product.stock}</td>
+            <td>
+                <button class="btn" onclick="editProduct(${product.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn danger" onclick="confirmDelete(${product.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
         `;
-    }
+        elements.productsTableBody.appendChild(row);
+    });
 }
 
 function updateCategoryFilter() {
@@ -420,53 +181,40 @@ function updateCategoryFilter() {
 }
 
 async function filterProducts() {
-    try {
-        const searchTerm = elements.searchInput?.value.toLowerCase() || '';
-        const categoryFilter = elements.categoryFilter?.value || '';
-        const stockFilter = elements.stockFilter?.value || '';
+    const searchTerm = elements.searchInput.value.toLowerCase();
+    const categoryFilter = elements.categoryFilter.value;
+    const stockFilter = elements.stockFilter.value;
 
-        console.log('Aplicando filtros:', { searchTerm, categoryFilter, stockFilter });
+    const { data: products, error } = await supabaseCliente
+        .from('productos')
+        .select('*');
 
-        const { data: products, error } = await supabaseCliente
-            .from('productos')
-            .select('*');
-
-        if (error) throw error;
-
-        if (!products) {
-            console.log('No se encontraron productos para filtrar');
-            renderProducts([]);
-            return;
-        }
-
-        let filtered = [...products];
-
-        // Aplicar filtros de forma segura
-        if (searchTerm) {
-            filtered = filtered.filter(p => 
-                (p.nombre?.toLowerCase() || '').includes(searchTerm) ||
-                (p.descripcion?.toLowerCase() || '').includes(searchTerm)
-            );
-        }
-
-        if (categoryFilter) {
-            filtered = filtered.filter(p => p.categoria === categoryFilter);
-        }
-
-        if (stockFilter === 'low') {
-            filtered = filtered.filter(p => (p.stock || 0) < 5);
-        } else if (stockFilter === 'out') {
-            filtered = filtered.filter(p => (p.stock || 0) === 0);
-        }
-
-        console.log(`Productos filtrados: ${filtered.length} de ${products.length}`);
-        renderProducts(filtered);
-
-    } catch (error) {
-        console.error('Error al filtrar productos:', error);
-        addNotification('Error', 'Error al filtrar los productos', 'error');
-        renderProducts([]);
+    if (error) {
+        addNotification('Error', 'Error al filtrar productos', 'error');
+        return;
     }
+
+    let filtered = products;
+
+    // Aplicar filtros
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            p.nombre.toLowerCase().includes(searchTerm) ||
+            p.descripcion.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (categoryFilter) {
+        filtered = filtered.filter(p => p.categoria === categoryFilter);
+    }
+
+    if (stockFilter === 'low') {
+        filtered = filtered.filter(p => p.stock < 5);
+    } else if (stockFilter === 'out') {
+        filtered = filtered.filter(p => p.stock === 0);
+    }
+
+    renderProducts(filtered);
 }
 
 // --- Edición de Productos ---
@@ -484,7 +232,6 @@ async function editProduct(id) {
 
     editingProduct = product;
     showEditModal(product);
-    elements.editModal.style.display = 'block';
 }
 
 function showEditModal(product) {
@@ -516,76 +263,47 @@ function showEditModal(product) {
                 </div>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn primary" id="edit-submit-button">
+                <button type="submit" class="btn primary">
                     <i class="fas fa-save"></i> Guardar Cambios
                 </button>
-                <button type="button" class="btn secondary" id="edit-cancel-button">
+                <button type="button" class="btn secondary" onclick="elements.editModal.style.display='none'">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
             </div>
         </form>
     `;
 
-    const form = document.getElementById('edit-form');
-    const closeButton = elements.editModal.querySelector('.close');
-    const cancelButton = document.getElementById('edit-cancel-button');
-    const submitButton = document.getElementById('edit-submit-button');
+    elements.editModal.style.display = 'block';
 
-    // Remover event listeners anteriores
-    const newForm = form.cloneNode(true);
-    form.parentNode.replaceChild(newForm, form);
-
-    // Agregar nuevos event listeners
-    newForm.addEventListener('submit', async (e) => {
+    // Event Listener para el formulario
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-        try {
-            await updateProduct(product.id);
-        } finally {
-            submitButton.disabled = false;
-            submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
-        }
+        await updateProduct(product.id);
     });
 
-    const closeModal = () => {
+    // Event Listener para cerrar modal
+    elements.editModal.querySelector('.close').addEventListener('click', () => {
         elements.editModal.style.display = 'none';
-    };
-
-    closeButton.addEventListener('click', closeModal);
-    cancelButton.addEventListener('click', closeModal);
-
-    // Cerrar modal al hacer clic fuera
-    elements.editModal.addEventListener('click', (e) => {
-        if (e.target === elements.editModal) {
-            closeModal();
-        }
     });
 }
 
 async function updateProduct(id) {
-    try {
-        const updatedProduct = {
-            nombre: document.getElementById('edit-nombre').value,
-            descripcion: document.getElementById('edit-descripcion').value,
-            precio: parseFloat(document.getElementById('edit-precio').value),
-            stock: parseInt(document.getElementById('edit-stock').value),
-            categoria: document.getElementById('edit-categoria').value
-        };
+    const updatedProduct = {
+        nombre: document.getElementById('edit-nombre').value,
+        descripcion: document.getElementById('edit-descripcion').value,
+        precio: parseFloat(document.getElementById('edit-precio').value),
+        stock: parseInt(document.getElementById('edit-stock').value),
+        categoria: document.getElementById('edit-categoria').value
+    };
 
-        const { error } = await supabaseCliente
-            .from('productos')
-            .update(updatedProduct)
-            .eq('id', id);
+    const { error } = await supabaseCliente
+        .from('productos')
+        .update(updatedProduct)
+        .eq('id', id);
 
-        if (error) throw error;
-
-        addNotification('Éxito', 'Producto actualizado correctamente', 'success');
-        await loadProducts();
-        elements.editModal.style.display = 'none';
-    } catch (error) {
-        console.error('Error al actualizar:', error);
-        addNotification('Error', `Error al actualizar el producto: ${error.message}`, 'error');
+    if (error) {
+        addNotification('Error', 'Error al actualizar el producto', 'error');
+        return;
     }
 
     elements.editModal.style.display = 'none';
@@ -630,58 +348,20 @@ function handleFiles(files) {
 
 // --- Formulario de Nuevo Producto ---
 function setupProductForm() {
-    if (!elements.productForm) return;
-
-    // Configurar preview de imagen
-    elements.imageInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                elements.imagePreview.src = e.target.result;
-                elements.imagePreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // Manejar envío del formulario
     elements.productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        elements.submitButton.disabled = true;
+        elements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        const file = elements.imageInput.files[0];
+        if (!file) {
+            addNotification('Error', 'Por favor, selecciona una imagen para el producto', 'error');
+            elements.submitButton.disabled = false;
+            elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+            return;
+        }
+
         try {
-            // Validar todos los campos
-            let isValid = true;
-            inputs.forEach(input => {
-                if (!validateInput(input)) {
-                    isValid = false;
-                }
-            });
-
-            if (!isValid) {
-                addNotification('Error', 'Por favor, completa todos los campos correctamente', 'error');
-                return;
-            }
-
-            elements.submitButton.disabled = true;
-            elements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-            const file = elements.imageInput.files[0];
-            if (!file) {
-                addNotification('Error', 'Por favor, selecciona una imagen para el producto', 'error');
-                elements.submitButton.disabled = false;
-                elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
-                return;
-            }
-
-            // Validar imagen
-            if (file.size > 5 * 1024 * 1024) {
-                throw new Error('La imagen es demasiado grande. Máximo 5MB');
-            }
-
-            if (!file.type.startsWith('image/')) {
-                throw new Error('Por favor, selecciona un archivo de imagen válido');
-            }
-
             // Subir imagen
             const filePath = `public/${Date.now()}-${file.name}`;
             const { data: uploadData, error: uploadError } = await supabaseCliente.storage
@@ -719,17 +399,15 @@ function setupProductForm() {
             // Actualizar datos
             await loadProducts();
             await loadDashboardStats();
-            switchSection('products');
 
         } catch (error) {
-            console.error('Error al guardar producto:', error);
-            addNotification('Error', error.message || 'Error al guardar el producto', 'error');
+            addNotification('Error', `Error al guardar el producto: ${error.message}`, 'error');
         } finally {
             elements.submitButton.disabled = false;
             elements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
         }
     });
-} 
+}
 
 // --- Eliminación de Productos ---
 function confirmDelete(id) {
@@ -747,13 +425,7 @@ function confirmDelete(id) {
 }
 
 async function deleteProduct(id) {
-    const confirmButton = document.getElementById('confirm-yes');
-    const cancelButton = document.getElementById('confirm-no');
-
     try {
-        confirmButton.disabled = true;
-        confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-
         // Obtener la URL de la imagen primero
         const { data: product, error: fetchError } = await supabaseCliente
             .from('productos')
@@ -773,28 +445,18 @@ async function deleteProduct(id) {
 
         // Intentar eliminar la imagen si existe
         if (product.imagen_url) {
-            try {
-                const imagePath = product.imagen_url.split('/').pop();
-                await supabaseCliente.storage
-                    .from('productos')
-                    .remove([`public/${imagePath}`]);
-            } catch (storageError) {
-                console.warn('Error al eliminar la imagen:', storageError);
-                // Continuamos aunque falle la eliminación de la imagen
-            }
+            const imagePath = product.imagen_url.split('/').pop();
+            await supabaseCliente.storage
+                .from('productos')
+                .remove([`public/${imagePath}`]);
         }
 
         addNotification('Éxito', 'Producto eliminado correctamente', 'success');
         await loadProducts();
         await loadDashboardStats();
-        elements.confirmModal.style.display = 'none';
 
     } catch (error) {
-        console.error('Error al eliminar:', error);
         addNotification('Error', `Error al eliminar el producto: ${error.message}`, 'error');
-    } finally {
-        confirmButton.disabled = false;
-        confirmButton.innerHTML = 'Sí';
     }
 }
 
@@ -827,67 +489,6 @@ function updateNotifications() {
 }
 
 // --- Utilidades ---
-function validateInput(input) {
-    let isValid = true;
-    const value = input.value.trim();
-
-    // Remover mensajes de error anteriores
-    const errorMsg = input.parentElement.querySelector('.error-message');
-    if (errorMsg) errorMsg.remove();
-
-    // Validaciones según el tipo de input
-    switch(input.id) {
-        case 'nombre':
-        case 'edit-nombre':
-            if (value.length < 3) {
-                showError(input, 'El nombre debe tener al menos 3 caracteres');
-                isValid = false;
-            }
-            break;
-        case 'precio':
-        case 'edit-precio':
-            if (isNaN(value) || parseFloat(value) <= 0) {
-                showError(input, 'Ingresa un precio válido mayor a 0');
-                isValid = false;
-            }
-            break;
-        case 'stock':
-        case 'edit-stock':
-            if (!Number.isInteger(parseFloat(value)) || parseInt(value) < 0) {
-                showError(input, 'Ingresa una cantidad válida (número entero)');
-                isValid = false;
-            }
-            break;
-        case 'categoria':
-        case 'edit-categoria':
-            if (value.length < 2) {
-                showError(input, 'Ingresa una categoría válida');
-                isValid = false;
-            }
-            break;
-        case 'descripcion':
-        case 'edit-descripcion':
-            if (value.length < 10) {
-                showError(input, 'La descripción debe tener al menos 10 caracteres');
-                isValid = false;
-            }
-            break;
-    }
-
-    // Actualizar estilo del input
-    input.classList.toggle('is-invalid', !isValid);
-    input.classList.toggle('is-valid', isValid);
-
-    return isValid;
-}
-
-function showError(input, message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    input.parentElement.appendChild(errorDiv);
-}
-
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -901,51 +502,128 @@ function debounce(func, wait) {
 }
 
 function switchSection(sectionName) {
-    try {
-        console.log('Cambiando a sección:', sectionName);
-        
-        if (!sections[sectionName]) {
-            console.error('Sección no encontrada:', sectionName);
-            return;
+    Object.values(sections).forEach(section => {
+        section.classList.remove('active');
+    });
+    sections[sectionName].classList.add('active');
+    
+    elements.navItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === sectionName) {
+            item.classList.add('active');
         }
+    });
 
-        // Ocultar todas las secciones
-        Object.values(sections).forEach(section => {
-            section.classList.remove('active');
-            section.style.display = 'none';
-        });
-
-        // Mostrar la sección seleccionada
-        sections[sectionName].classList.add('active');
-        sections[sectionName].style.display = 'block';
-        
-        // Actualizar navegación
-        elements.navItems.forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.section === sectionName) {
-                item.classList.add('active');
-            }
-        });
-
-        currentSection = sectionName;
-        
-        // Cargar datos según la sección
-        if (sectionName === 'products') {
-            loadProducts().catch(error => {
-                console.error('Error al cargar productos:', error);
-                addNotification('Error', 'Error al cargar los productos', 'error');
-            });
-        } else if (sectionName === 'dashboard') {
-            loadDashboardStats().catch(error => {
-                console.error('Error al cargar estadísticas:', error);
-                addNotification('Error', 'Error al cargar las estadísticas', 'error');
-            });
-        }
-
-        console.log('Sección cambiada exitosamente a:', sectionName);
-} catch (error) {
-        console.error('Error al cambiar sección:', error);
-        addNotification('Error', 'Error al cambiar de sección', 'error');
+    currentSection = sectionName;
+    
+    if (sectionName === 'products') {
+        loadProducts();
+    } else if (sectionName === 'dashboard') {
+        loadDashboardStats();
     }
-}   
+}
 
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- Elementos del DOM ---
+const logoutButton = document.getElementById('logout-button');
+const productForm = document.getElementById('product-form');
+const submitButton = document.getElementById('submit-button');
+const imageUploadArea = document.getElementById('image-upload-area');
+const imageInput = document.getElementById('imagen');
+const imagePreview = document.getElementById('image-preview');
+
+// --- Lógica Principal ---
+document.addEventListener('DOMContentLoaded', () => {
+    checkUserSession();
+    setupImageUpload();
+});
+
+// Proteger la página
+async function checkUserSession() {
+    const { data: { session } } = await supabaseCliente.auth.getSession();
+    if (!session) {
+        window.location.href = '/login.html';
+    }
+}
+
+// Cerrar sesión
+logoutButton.addEventListener('click', async () => {
+    await supabaseCliente.auth.signOut();
+    window.location.href = '/login.html';
+});
+
+// Lógica para subir y previsualizar imágenes
+function setupImageUpload() {
+    imageUploadArea.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    imageUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = 'var(--color-primary)'; });
+    imageUploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = '#ccc'; });
+    imageUploadArea.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); imageUploadArea.style.borderColor = '#ccc'; handleFiles(e.dataTransfer.files); });
+}
+
+function handleFiles(files) {
+    const file = files[0];
+    if (file && file.type.startsWith('image/')) {
+        imageInput.files = files;
+        const reader = new FileReader();
+        reader.onload = (e) => { imagePreview.src = e.target.result; };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Guardar el producto
+productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitButton.disabled = true;
+    submitButton.textContent = 'Guardando...';
+
+    const file = imageInput.files[0];
+    if (!file) {
+        alert('Por favor, selecciona una imagen para el producto.');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Guardar Producto';
+        return;
+    }
+
+    const filePath = `public/${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabaseCliente.storage
+        .from('productos')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        alert('Error al subir la imagen: ' + uploadError.message);
+        console.error(uploadError); // Para ver el error detallado en consola
+        submitButton.disabled = false;
+        submitButton.textContent = 'Guardar Producto';
+        return;
+    }
+
+    const { data: urlData } = supabaseCliente.storage
+        .from('productos')
+        .getPublicUrl(uploadData.path);
+    
+    const productData = {
+        nombre: document.getElementById('nombre').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio: parseFloat(document.getElementById('precio').value),
+        stock: parseInt(document.getElementById('stock').value),
+        categoria: document.getElementById('categoria').value,
+        imagen_url: urlData.publicUrl,
+    };
+
+    const { error: insertError } = await supabaseCliente
+        .from('productos')
+        .insert([productData]);
+
+    if (insertError) {
+        alert('Error al guardar el producto: ' + insertError.message);
+    } else {
+        alert('¡Producto guardado con éxito!');
+        productForm.reset();
+        imagePreview.src = '';
+    }
+    
+    submitButton.disabled = false;
+    submitButton.textContent = 'Guardar Producto';
+});

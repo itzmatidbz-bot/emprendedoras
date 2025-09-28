@@ -14,9 +14,6 @@
         <aside class="admin-sidebar">
             <div class="admin-logo">
                 <h2>Panel Admin</h2>
-                <button class="menu-toggle" id="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
             </div>
             <nav class="admin-nav">
                 <button class="nav-item active" data-section="dashboard">
@@ -25,11 +22,13 @@
                 <button class="nav-item" data-section="products">
                     <i class="fas fa-box"></i> Productos
                 </button>
+                <button class="nav-item" data-section="new-product">
+                    <i class="fas fa-plus"></i> Nuevo Producto
+                </button>
                 <button id="logout-button" class="nav-item">
                     <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                 </button>
             </nav>
-            <div class="sidebar-overlay"></div>
         </aside>
 
         <!-- Main Content -->
@@ -72,59 +71,7 @@
 
             <!-- Products Section -->
             <section id="products" class="admin-section">
-                <div class="section-header">
-                    <h2>Gestión de Productos</h2>
-                    <button id="new-product-btn" class="btn primary">
-                        <i class="fas fa-plus"></i> Nuevo Producto
-                    </button>
-                </div>
-
-                <!-- Formulario de Nuevo Producto (inicialmente oculto) -->
-                <div id="new-product-form" class="product-form-container" style="display: none;">
-                    <h3>Añadir Nuevo Producto</h3>
-                    <form id="product-form" class="product-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <div id="image-upload-area" class="image-upload-area">
-                                    <p><i class="fas fa-cloud-upload-alt"></i></p>
-                                    <p>Arrastra y suelta una imagen aquí, o haz clic para seleccionarla</p>
-                                    <input type="file" id="imagen" name="imagen" accept="image/*" required>
-                                    <img id="image-preview" src="" alt="Vista previa" style="display: none;">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="nombre">Nombre del Producto</label>
-                                <input type="text" id="nombre" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="descripcion">Descripción</label>
-                                <textarea id="descripcion" required rows="4"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="precio">Precio</label>
-                                <input type="number" id="precio" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="stock">Stock</label>
-                                <input type="number" id="stock" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="categoria">Categoría</label>
-                                <input type="text" id="categoria" required>
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" id="submit-button" class="btn primary">
-                                <i class="fas fa-save"></i> Guardar Producto
-                            </button>
-                            <button type="button" id="cancel-button" class="btn secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Lista de Productos -->
+                <h2>Gestión de Productos</h2>
                 <div class="products-filters">
                     <select id="category-filter">
                         <option value="">Todas las categorías</option>
@@ -152,7 +99,50 @@
                 </div>
             </section>
 
-
+            <!-- New Product Section -->
+            <section id="new-product" class="admin-section">
+                <h2>Añadir Nuevo Producto</h2>
+                <form id="product-form" class="product-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <div id="image-upload-area" class="image-upload-area">
+                                <p><i class="fas fa-cloud-upload-alt"></i></p>
+                                <p>Arrastra y suelta una imagen aquí, o haz clic para seleccionarla</p>
+                                <input type="file" id="imagen" accept="image/*" style="display: none;">
+                                <img id="image-preview" src="" alt="Vista previa">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Producto</label>
+                            <input type="text" id="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="descripcion">Descripción</label>
+                            <textarea id="descripcion" required rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="precio">Precio</label>
+                            <input type="number" id="precio" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock</label>
+                            <input type="number" id="stock" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoria">Categoría</label>
+                            <input type="text" id="categoria" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" id="submit-button" class="btn primary">
+                            <i class="fas fa-save"></i> Guardar Producto
+                        </button>
+                        <button type="reset" class="btn secondary">
+                            <i class="fas fa-undo"></i> Limpiar Formulario
+                        </button>
+                    </div>
+                </form>
+            </section>
         </main>
 
         <!-- Notifications Panel -->

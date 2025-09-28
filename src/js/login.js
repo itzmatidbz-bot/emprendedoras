@@ -1,93 +1,27 @@
-const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
+const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co'; // <-- ¡Pega tu URL aquí!
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk'; // <-- ¡Pega tu clave anónima aquí!
 
-const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storageKey: 'admin-auth',
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    }
-});
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const loginForm = document.getElementById('login-form');
 const errorMessage = document.getElementById('error-message');
 
-// Verificar si ya hay una sesión activa
-document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { session }, error } = await supabaseCliente.auth.getSession();
-    if (session) {
-        // Verificar si es administrador
-        try {
-            const { data: profile, error: profileError } = await supabaseCliente
-                .from('perfiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .single();
-
-            if (!profileError && profile && profile.role === 'admin') {
-                window.location.href = '/admin.html';
-                return;
-            }
-        } catch (error) {
-            console.error('Error al verificar rol:', error);
-        }
-    }
-});
-
-// Limpiar mensaje de error cuando el usuario empiece a escribir
-document.getElementById('email').addEventListener('input', () => {
-    errorMessage.textContent = '';
-    errorMessage.classList.remove('show');
-});
-
-document.getElementById('password').addEventListener('input', () => {
-    errorMessage.textContent = '';
-    errorMessage.classList.remove('show');
-});
-
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
-        const submitButton = document.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Iniciando sesión...</span>';    try {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
 
-        const { data, error } = await supabaseCliente.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-        if (error) throw error;
+    const { data, error } = await supabaseCliente.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
 
-        // Crear tabla de perfiles si no existe
-        const { error: createTableError } = await supabaseCliente.rpc('create_profiles_table');
-        
-        // Insertar o actualizar perfil de administrador
-        const { error: updateProfileError } = await supabaseCliente
-            .from('perfiles')
-            .upsert([
-                { 
-                    id: data.user.id,
-                    role: 'admin',
-                    email: data.user.email
-                }
-            ], { onConflict: 'id' });
-
-        if (updateProfileError) {
-            console.error('Error al actualizar perfil:', updateProfileError);
-        }
-
-        window.location.href = '/admin.html';
-
-    } catch (error) {
-        console.error('Error de inicio de sesión:', error);
+    if (error) {
         errorMessage.textContent = 'Email o contraseña incorrectos.';
-        errorMessage.classList.add('show');
-        submitButton.disabled = false;
-        submitButton.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Iniciar Sesión</span>';
+    } else {
+        window.location.href = '/admin.html';
     }
 });
 // CORREGIDO: Se eliminó una llave "}" extra que había aquí
