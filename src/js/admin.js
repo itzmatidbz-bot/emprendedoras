@@ -42,7 +42,7 @@ const elements = {
     productForm: document.getElementById('product-form'),
     submitButton: document.getElementById('submit-button'),
     imageUploadArea: document.getElementById('image-upload-area'),
-    imageInput: document.getElementById('imagen'),
+    imageInput: document.querySelector('#imagen'),
     imagePreview: document.getElementById('image-preview'),
     logoutButton: document.getElementById('logout-button')
 };
@@ -634,15 +634,7 @@ function handleFiles(files) {
 function setupProductForm() {
     if (!elements.productForm) return;
 
-    // Validación en tiempo real
-    const inputs = elements.productForm.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            validateInput(input);
-        });
-    });
-
-    // Preview de imagen
+    // Configurar preview de imagen
     elements.imageInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -655,6 +647,7 @@ function setupProductForm() {
         }
     });
 
+    // Manejar envío del formulario
     elements.productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
