@@ -221,22 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateDiscounts(subtotal) {
         let discount = 0;
-        let shipping = 150; // Costo base de envío
         let discountMessage = '';
-        let shippingMessage = '';
 
         // Descuento por compra mayorista
         if (subtotal >= 2000) {
             discount = subtotal * 0.15; // 15% de descuento
             discountMessage = 'Descuento mayorista (15%)';
-        }
-
-        // Envío gratis
-        if (subtotal >= 1000) {
-            shipping = 0;
-            shippingMessage = 'Envío gratis';
-        } else {
-            shippingMessage = 'Costo de envío';
         }
 
         return {

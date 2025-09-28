@@ -88,9 +88,7 @@ body {
 .header {
     background-color: var(--white-color);
     box-shadow: var(--shadow);
-    position: fixed;
-    top: 2.5rem;
-    left: 0;
+    position: relative;
     width: 100%;
     z-index: 1000;
     transition: var(--transition);

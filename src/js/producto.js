@@ -153,9 +153,58 @@ document.addEventListener('DOMContentLoaded', () => {
         cartCount.textContent = totalItems;
     }
 
+    function calculateDiscounts(subtotal) {
+        let discount = 0;
+        let discountMessage = '';
+
+        // Descuento por compra mayorista
+        if (subtotal >= 2000) {
+            discount = subtotal * 0.15; // 15% de descuento
+            discountMessage = 'Descuento mayorista (15%)';
+        }
+
+        return {
+            subtotal,
+            discount,
+            total: subtotal - discount,
+            discountMessage
+        };
+    }
+
     function updateCartTotal() {
-        const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-        cartTotal.textContent = total.toFixed(2);
+        const subtotal = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+        const { total, discount, discountMessage } = calculateDiscounts(subtotal);
+
+        // Actualizar el HTML del total del carrito
+        const cartTotalContainer = document.querySelector('.cart-modal__footer');
+        cartTotalContainer.innerHTML = `
+            <div class="cart-modal__summary">
+                <div class="summary-line">
+                    <span>Subtotal:</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+                ${discount > 0 ? `
+                <div class="summary-line discount">
+                    <span>${discountMessage}:</span>
+                    <span>-$${discount.toFixed(2)}</span>
+                </div>` : ''}
+                <div class="summary-line total">
+                    <span>Total:</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            </div>
+            <button id="checkout-btn" class="btn btn--primary">Finalizar Compra</button>
+            <button id="clear-cart-btn" class="btn btn--secondary">Vaciar Carrito</button>
+        `;
+
+        // Reattach event listeners
+        document.getElementById('checkout-btn').addEventListener('click', checkout);
+        document.getElementById('clear-cart-btn').addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                cart = [];
+                updateCart();
+            }
+        });
     }
 
     function addToCart(product, quantity = 1) {
