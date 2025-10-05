@@ -1,376 +1,1030 @@
-const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co'; // <-- ¡Pega tu URL aquí!
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk'; // <-- ¡Pega tu clave anónima aquí!
-const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// =====================================================
+// 🌟 EMPRENDEDORAS DE ACERO - ADMIN MEJORADO CON IA
+// =====================================================
 
-// --- Estado de la Aplicación ---
-let allProducts = [];
-let editingProductId = null;
+// Variables globales
+const SUPABASE_URL = 'https://sliqaezclxbvlxwbqpjp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaXFhZXpjbHhidmx4d2JxcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMTQwNzYsImV4cCI6MjA3MDg5MDA3Nn0.inNhc24bE0E6B9UOBnSBc0_sxsPrTX4JRaynET68Lsk';
 
-// --- Selectores del DOM ---
-const DOMElements = {
-    // Secciones
-    sections: document.querySelectorAll('.admin-section'),
-    // Navegación
-    navItems: document.querySelectorAll('.nav-item'),
-    sidebar: document.querySelector('.admin-sidebar'),
-    // Menú Móvil
-    menuToggle: document.getElementById('menu-toggle'),
-    sidebarOverlay: document.getElementById('sidebar-overlay'),
-    // Dashboard
-    totalProducts: document.getElementById('total-products'),
-    lowStock: document.getElementById('low-stock'),
-    totalCategories: document.getElementById('total-categories'),
-    // Productos
-    productsTableBody: document.getElementById('products-table-body'),
-    searchInput: document.getElementById('search-products'),
-    categoryFilter: document.getElementById('category-filter'),
-    stockFilter: document.getElementById('stock-filter'),
-    // Formulario de Producto (Crear/Editar)
-    productFormSection: document.getElementById('new-product'),
-    productForm: document.getElementById('product-form'),
-    formTitle: document.querySelector('#new-product h2'),
-    submitButton: document.getElementById('submit-button'),
-    imageUploadArea: document.getElementById('image-upload-area'),
-    imageInput: document.getElementById('imagen'),
-    imagePreview: document.getElementById('image-preview'),
-    // Modales
-    confirmModal: document.getElementById('confirm-modal'),
-    confirmMessage: document.getElementById('confirm-message'),
-    confirmYesBtn: document.getElementById('confirm-yes'),
-    confirmNoBtn: document.getElementById('confirm-no'),
-    // Botones
-    logoutButton: document.getElementById('logout-button')
-};
-
-// --- INICIALIZACIÓN ---
-document.addEventListener('DOMContentLoaded', async () => {
-    await checkUserRole();
-    setupEventListeners();
-    await loadInitialData();
-    switchSection('dashboard');
+const supabaseCliente = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        storageKey: 'admin-auth',
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
 });
 
-/**
- * Verifica si el usuario tiene una sesión activa y es administrador.
- */
-async function checkUserRole() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        window.location.href = 'login.html';
+let editingProductId = null;
+let selectedImages = [];
+let imageCounter = 0;
+let currentProductsData = [];
+let categoriesData = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🌟 Emprendedoras de Acero - Admin con IA iniciando...');
+    
+    // Proteger página
+    await protectPage();
+    
+    // Cargar datos iniciales
+    await loadCategoriesData();
+    const allData = await loadInitialData();
+    
+    if (allData) {
+        renderUI(allData);
+        setupEventListeners(allData.products);
+    }
+    
+    console.log('✅ Sistema cargado completamente');
+});
+
+// =====================================================
+// 🔐 PROTECCIÓN DE PÁGINA
+// =====================================================
+async function protectPage() {
+    try {
+        const { data: { session }, error } = await supabaseCliente.auth.getSession();
+        
+        if (error) {
+            console.error('Error de sesión:', error);
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        if (!session) {
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        console.log('✅ Usuario autenticado correctamente');
+        
+    } catch (error) {
+        console.error('Error al verificar sesión:', error);
+        window.location.href = '/login.html';
     }
 }
 
-/**
- * Configura todos los event listeners de la aplicación.
- */
-function setupEventListeners() {
-    // Navegación principal y cierre de menú móvil
-    DOMElements.navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            if (DOMElements.sidebar.classList.contains('active')) {
-                toggleMobileMenu();
-            }
-            const section = e.currentTarget.dataset.section;
-            if (section) {
-                switchSection(section);
-            }
-        });
-    });
-
-    // Menú móvil
-    DOMElements.menuToggle.addEventListener('click', toggleMobileMenu);
-    DOMElements.sidebarOverlay.addEventListener('click', toggleMobileMenu);
-
-    // Cerrar sesión
-    DOMElements.logoutButton.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-    });
-    
-    // Filtros
-    DOMElements.searchInput.addEventListener('input', debounce(renderProductsTable, 300));
-    DOMElements.categoryFilter.addEventListener('change', renderProductsTable);
-    DOMElements.stockFilter.addEventListener('change', renderProductsTable);
-
-    // Formulario
-    DOMElements.productForm.addEventListener('submit', handleProductFormSubmit);
-    DOMElements.productForm.addEventListener('reset', resetProductForm);
-
-    // Tabla
-    DOMElements.productsTableBody.addEventListener('click', handleTableActions);
-    setupImageUploadListeners();
-    
-    // Modal
-    DOMElements.confirmNoBtn.addEventListener('click', () => DOMElements.confirmModal.style.display = 'none');
+// =====================================================
+// 🏷️ CARGA DE DATOS DE CATEGORIZACIÓN
+// =====================================================
+async function loadCategoriesData() {
+    try {
+        console.log('📋 Cargando datos de categorización...');
+        
+        // Cargar categorías principales
+        const { data: categorias, error: catError } = await supabaseCliente
+            .from('categorias_nuevas')
+            .select('*')
+            .eq('activo', true)
+            .order('nombre');
+        
+        if (catError) throw catError;
+        
+        // Cargar tipos de producto
+        const { data: tipos, error: tiposError } = await supabaseCliente
+            .from('tipos_producto')
+            .select('*, categorias_nuevas(nombre)')
+            .eq('activo', true)
+            .order('nombre');
+        
+        if (tiposError) throw tiposError;
+        
+        // Cargar materiales
+        const { data: materiales, error: matError } = await supabaseCliente
+            .from('materiales')
+            .select('*')
+            .eq('activo', true)
+            .order('nombre');
+        
+        if (matError) throw matError;
+        
+        // Cargar colores
+        const { data: colores, error: colError } = await supabaseCliente
+            .from('colores_productos')
+            .select('*')
+            .eq('activo', true)
+            .order('nombre');
+        
+        if (colError) throw colError;
+        
+        // Organizar datos
+        categoriesData = {
+            categorias: categorias || [],
+            tipos: tipos || [],
+            materiales: materiales || [],
+            colores: colores || []
+        };
+        
+        console.log('✅ Datos de categorización cargados:', categoriesData);
+        
+        // Poblar selects
+        populateSelects();
+        setupCategoryDependencies();
+        
+    } catch (error) {
+        console.error('❌ Error cargando categorización:', error);
+        loadFallbackCategories();
+    }
 }
 
-/**
- * Carga los datos iniciales para el panel.
- */
+function populateSelects() {
+    // Poblar categorías
+    populateSelect('categoria-nueva', categoriesData.categorias, 'Selecciona una categoría');
+    
+    // Poblar materiales
+    populateSelect('material', categoriesData.materiales, 'Selecciona un material');
+    
+    // Poblar colores disponibles
+    populateMultiColorSelect(categoriesData.colores);
+}
+
+function populateSelect(selectId, options, placeholder) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    
+    options.forEach(option => {
+        select.innerHTML += `<option value="${option.id}">${option.nombre}</option>`;
+    });
+}
+
+function populateMultiColorSelect(colores) {
+    const container = document.getElementById('colores-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    colores.forEach(color => {
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'color-option';
+        colorDiv.innerHTML = `
+            <input type="checkbox" id="color-${color.id}" value="${color.nombre}">
+            <label for="color-${color.id}">
+                <div class="color-swatch" style="background-color: ${color.codigo_hex || '#ccc'}"></div>
+                <span class="color-name">${color.nombre}</span>
+            </label>
+        `;
+        container.appendChild(colorDiv);
+    });
+    
+    // Event listeners para colores
+    container.addEventListener('change', updateSelectedColors);
+}
+
+function updateSelectedColors() {
+    const selectedColors = [];
+    document.querySelectorAll('#colores-grid input[type="checkbox"]:checked').forEach(checkbox => {
+        selectedColors.push(checkbox.value);
+    });
+    
+    // Mostrar colores seleccionados
+    const display = document.getElementById('selected-colors-display') || createSelectedColorsDisplay();
+    display.textContent = selectedColors.length > 0 ? 
+        `Colores seleccionados: ${selectedColors.join(', ')}` : 
+        'Ningún color seleccionado';
+}
+
+function createSelectedColorsDisplay() {
+    const display = document.createElement('div');
+    display.id = 'selected-colors-display';
+    display.className = 'selected-colors-display';
+    const container = document.getElementById('colores-grid').parentNode;
+    container.appendChild(display);
+    return display;
+}
+
+function setupCategoryDependencies() {
+    const categoriaSelect = document.getElementById('categoria-nueva');
+    const tipoSelect = document.getElementById('tipo-producto');
+    
+    if (!categoriaSelect || !tipoSelect) return;
+    
+    categoriaSelect.addEventListener('change', (e) => {
+        const categoriaId = e.target.value;
+        
+        // Limpiar tipos
+        tipoSelect.innerHTML = '<option value="">Selecciona un tipo</option>';
+        
+        if (categoriaId) {
+            // Filtrar tipos por categoría
+            const tiposFiltrados = categoriesData.tipos.filter(tipo => 
+                tipo.categoria_id == categoriaId
+            );
+            
+            tiposFiltrados.forEach(tipo => {
+                tipoSelect.innerHTML += `<option value="${tipo.id}">${tipo.nombre}</option>`;
+            });
+            
+            tipoSelect.disabled = false;
+        } else {
+            tipoSelect.disabled = true;
+        }
+    });
+}
+
+// =====================================================
+// 📊 CARGA DE DATOS INICIAL
+// =====================================================
 async function loadInitialData() {
     try {
-        const { data, error } = await supabase.from('productos').select('*').order('id', { ascending: true });
-        if (error) throw error;
-        allProducts = data;
+        console.log('📊 Cargando datos iniciales...');
         
-        updateDashboardStats();
-        updateCategoryFilter();
-        renderProductsTable();
+        // Intentar cargar de la vista primero, si no existe usar tabla productos
+        let products = [];
+        try {
+            const { data: vistaProducts, error: vistaError } = await supabaseCliente
+                .from('vista_productos_completa')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (!vistaError && vistaProducts) {
+                products = vistaProducts;
+                console.log('✅ Productos cargados desde vista completa');
+            }
+        } catch (vistaError) {
+            console.log('Vista no disponible, cargando desde tabla productos...');
+        }
+        
+        // Si no hay productos de la vista, cargar de la tabla original
+        if (products.length === 0) {
+            const { data: basicProducts, error: basicError } = await supabaseCliente
+                .from('productos')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (basicError) throw basicError;
+            products = basicProducts || [];
+            console.log('✅ Productos cargados desde tabla básica');
+        }
+        
+        currentProductsData = products;
+        
+        console.log(`✅ ${currentProductsData.length} productos cargados`);
+        
+        return {
+            products: currentProductsData
+        };
+        
     } catch (error) {
-        alert('Error al cargar los datos iniciales: ' + error.message);
+        console.error('❌ Error cargando datos:', error);
+        return { products: [] };
     }
 }
 
-// --- LÓGICA DE MENÚ MÓVIL ---
-/**
- * Muestra u oculta el menú lateral en dispositivos móviles.
- */
-function toggleMobileMenu() {
-    DOMElements.sidebar.classList.toggle('active');
-    DOMElements.sidebarOverlay.classList.toggle('active');
+// =====================================================
+// 🎨 RENDERIZADO DE UI
+// =====================================================
+function renderUI(data) {
+    updateDashboardStats(data.products);
+    renderProductsTable(data.products);
+    setupMultipleImages();
+    setupAIGenerator();
 }
 
-// --- LÓGICA DE SECCIONES ---
-function switchSection(sectionName) {
-    if (sectionName === 'new-product') {
-        resetProductForm();
-    }
-
-    DOMElements.sections.forEach(section => {
-        section.classList.toggle('active', section.id === sectionName);
-    });
-
-    DOMElements.navItems.forEach(item => {
-        item.classList.toggle('active', item.dataset.section === sectionName);
-    });
-    
-    if(sectionName === 'dashboard') updateDashboardStats();
-    if(sectionName === 'products') renderProductsTable();
-}
-
-// --- DASHBOARD ---
-function updateDashboardStats() {
+function updateDashboardStats(products) {
     const stats = {
-        total: allProducts.length,
-        lowStock: allProducts.filter(p => p.stock > 0 && p.stock < 5).length,
-        categories: new Set(allProducts.map(p => p.categoria)).size
+        total: products.length,
+        destacados: products.filter(p => p.destacado).length,
+        categorias: new Set(products.map(p => p.categoria_nueva_nombre || p.categoria).filter(Boolean)).size
     };
-    DOMElements.totalProducts.textContent = stats.total;
-    DOMElements.lowStock.textContent = stats.lowStock;
-    DOMElements.totalCategories.textContent = stats.categories;
+    
+    updateElement('total-products', stats.total);
+    updateElement('total-destacados', stats.destacados);
+    updateElement('total-categories', stats.categorias);
 }
 
-// --- GESTIÓN DE PRODUCTOS (TABLA) ---
-function renderProductsTable() {
-    const searchTerm = DOMElements.searchInput.value.toLowerCase();
-    const category = DOMElements.categoryFilter.value;
-    const stock = DOMElements.stockFilter.value;
+function updateElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
 
-    const filteredProducts = allProducts.filter(p => {
-        const matchesSearch = p.nombre.toLowerCase().includes(searchTerm) || (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm));
-        const matchesCategory = !category || p.categoria === category;
-        const matchesStock = !stock || (stock === 'low' && p.stock < 5 && p.stock > 0) || (stock === 'out' && p.stock === 0);
-        return matchesSearch && matchesCategory && matchesStock;
-    });
-
-    DOMElements.productsTableBody.innerHTML = filteredProducts.map(product => `
-        <tr data-id="${product.id}">
-            <td><img src="${product.imagen_url}" alt="${product.nombre}" class="product-table-img"></td>
-            <td>${product.nombre}</td>
-            <td>${product.categoria}</td>
-            <td>$${product.precio.toFixed(2)}</td>
-            <td class="${product.stock < 5 ? 'low-stock' : ''}">${product.stock}</td>
+function renderProductsTable(products) {
+    const tbody = document.getElementById('products-table-body');
+    if (!tbody) return;
+    
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay productos disponibles</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = products.map(product => `
+        <tr>
             <td>
-                <button class="btn-icon edit" data-action="edit" title="Editar">
+                <img src="${getProductMainImage(product)}" 
+                     alt="${product.nombre}" 
+                     class="product-thumbnail"
+                     onerror="this.src='/placeholder.jpg'">
+            </td>
+            <td>
+                <strong>${product.nombre}</strong>
+                ${product.destacado ? '<span class="badge-destacado">⭐ Destacado</span>' : ''}
+                ${product.generar_con_ia ? '<span class="badge-ia">🤖 IA</span>' : ''}
+            </td>
+            <td>${product.categoria_nueva_nombre || product.categoria || 'Sin categoría'}</td>
+            <td>${product.tipo_producto_nombre || '-'}</td>
+            <td>$${(product.precio || 0).toFixed(2)}</td>
+            <td>
+                <span class="status-badge ${(product.activo !== false) ? 'active' : 'inactive'}">
+                    ${(product.activo !== false) ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td class="actions-cell">
+                <button class="btn-icon edit-product" data-id="${product.id}" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-icon danger" data-action="delete" title="Eliminar">
+                <button class="btn-icon toggle-destacado" data-id="${product.id}" data-destacado="${product.destacado || false}" title="Destacar">
+                    <i class="fas fa-star"></i>
+                </button>
+                <button class="btn-icon delete-product" data-id="${product.id}" title="Eliminar">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
         </tr>
     `).join('');
-}
-
-function handleTableActions(e) {
-    const button = e.target.closest('button');
-    if (!button) return;
-
-    const action = button.dataset.action;
-    const row = button.closest('tr');
-    const productId = parseInt(row.dataset.id);
-
-    if (action === 'edit') {
-        openEditForm(productId);
-    } else if (action === 'delete') {
-        confirmDelete(productId);
-    }
-}
-
-function updateCategoryFilter() {
-    const categories = [...new Set(allProducts.map(p => p.categoria))];
-    DOMElements.categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-    categories.forEach(cat => {
-        DOMElements.categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
+    
+    // Event listeners para botones
+    tbody.querySelectorAll('.edit-product').forEach(btn => {
+        btn.addEventListener('click', (e) => editProduct(parseInt(e.currentTarget.dataset.id)));
+    });
+    
+    tbody.querySelectorAll('.toggle-destacado').forEach(btn => {
+        btn.addEventListener('click', (e) => toggleDestacado(parseInt(e.currentTarget.dataset.id)));
+    });
+    
+    tbody.querySelectorAll('.delete-product').forEach(btn => {
+        btn.addEventListener('click', (e) => confirmDelete(parseInt(e.currentTarget.dataset.id)));
     });
 }
 
-// --- GESTIÓN DE PRODUCTOS (FORMULARIO) ---
-function openEditForm(productId) {
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    editingProductId = productId;
-
-    DOMElements.productForm.nombre.value = product.nombre;
-    DOMElements.productForm.descripcion.value = product.descripcion;
-    DOMElements.productForm.precio.value = product.precio;
-    DOMElements.productForm.stock.value = product.stock;
-    DOMElements.productForm.categoria.value = product.categoria;
-    DOMElements.imagePreview.src = product.imagen_url;
-    DOMElements.imagePreview.style.display = 'block';
-
-    DOMElements.formTitle.textContent = 'Editar Producto';
-    DOMElements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
-    
-    switchSection('new-product');
+function getProductMainImage(product) {
+    if (product.imagenes_urls && Array.isArray(product.imagenes_urls) && product.imagenes_urls.length > 0) {
+        return product.imagenes_urls[0];
+    }
+    return product.imagen_url || '/placeholder.jpg';
 }
 
-async function handleProductFormSubmit(e) {
-    e.preventDefault();
-    DOMElements.submitButton.disabled = true;
-    DOMElements.submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+// =====================================================
+// 🤖 GENERADOR DE PRODUCTOS CON IA
+// =====================================================
+function setupAIGenerator() {
+    const aiButton = document.getElementById('ai-generate-btn');
+    const aiTips = document.getElementById('ai-tips');
+    
+    if (aiButton) {
+        aiButton.addEventListener('click', generateProductWithAI);
+    }
+    
+    // Mostrar tips de IA
+    if (aiTips) {
+        aiTips.innerHTML = `
+            <div class="ai-tips-content">
+                <h4>💡 Tips para la IA:</h4>
+                <ul>
+                    <li>Describe el producto con detalles específicos</li>
+                    <li>Menciona colores, materiales y ocasión de uso</li>
+                    <li>Ejemplo: "Blusa elegante de seda azul para oficina"</li>
+                    <li>La IA generará descripción y sugerirá categorías</li>
+                </ul>
+            </div>
+        `;
+    }
+}
 
+async function generateProductWithAI() {
+    const aiButton = document.getElementById('ai-generate-btn');
+    const nombreInput = document.getElementById('nombre');
+    
+    if (!nombreInput.value.trim()) {
+        showAIStatus('error', 'Por favor, ingresa un nombre del producto para que la IA pueda trabajar');
+        return;
+    }
+    
     try {
-        const formData = new FormData(DOMElements.productForm);
+        // Cambiar estado del botón
+        aiButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        aiButton.disabled = true;
+        
+        showAIStatus('loading', 'La IA está analizando y generando contenido...');
+        
+        // Simular llamada a IA (puedes reemplazar con OpenAI API)
+        const aiDescription = await generateDescriptionWithAI(nombreInput.value);
+        
+        // Llenar campos automáticamente
+        document.getElementById('descripcion').value = aiDescription.descripcion;
+        
+        // Sugerir categoría
+        if (aiDescription.categoria_sugerida) {
+            suggestCategory(aiDescription.categoria_sugerida);
+        }
+        
+        // Marcar como generado con IA
+        const genAICheckbox = document.getElementById('generar-con-ia');
+        if (genAICheckbox) genAICheckbox.checked = true;
+        
+        showAIStatus('success', '¡Contenido generado exitosamente! Revisa y ajusta según necesites.');
+        
+    } catch (error) {
+        console.error('Error generando con IA:', error);
+        showAIStatus('error', 'Error al generar contenido. Intenta nuevamente.');
+    } finally {
+        aiButton.innerHTML = '<i class="fas fa-magic"></i> Generar con IA';
+        aiButton.disabled = false;
+    }
+}
+
+async function generateDescriptionWithAI(productName) {
+    // Simulación de IA - puedes reemplazar con una API real como OpenAI
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const templates = {
+                'blusa': {
+                    descripcion: `Elegante blusa ${productName.toLowerCase()} confeccionada con materiales de alta calidad. Perfecta para ocasiones especiales y uso diario. Su diseño versátil la convierte en una pieza imprescindible en tu guardarropa. Disponible en diferentes tallas para un ajuste perfecto.`,
+                    categoria_sugerida: 'Prendas de Vestir'
+                },
+                'vestido': {
+                    descripcion: `Hermoso vestido ${productName.toLowerCase()} que combina estilo y comodidad. Su corte favorecedor se adapta a diferentes tipos de cuerpo. Ideal para eventos especiales o para lucir elegante en cualquier ocasión. Confeccionado con atención al detalle.`,
+                    categoria_sugerida: 'Prendas de Vestir'
+                },
+                'cartera': {
+                    descripcion: `Elegante cartera ${productName.toLowerCase()} diseñada para la mujer moderna. Amplio espacio interior con compartimentos organizadores. Perfecta combinación de funcionalidad y estilo. Material resistente y acabados de calidad premium.`,
+                    categoria_sugerida: 'Bolsos y Carteras'
+                },
+                'collar': {
+                    descripcion: `Hermoso collar ${productName.toLowerCase()} que añade un toque de elegancia a cualquier outfit. Diseño único que resalta tu personalidad. Perfecto para regalar o para consentirte. Materiales de calidad que garantizan durabilidad.`,
+                    categoria_sugerida: 'Joyería'
+                },
+                'anillo': {
+                    descripcion: `Elegante anillo ${productName.toLowerCase()} de diseño sofisticado. Perfecto para complementar cualquier look. Acabado de alta calidad que perdura en el tiempo. Una pieza única que refleja tu estilo personal.`,
+                    categoria_sugerida: 'Joyería'
+                }
+            };
+            
+            // Detectar tipo de producto por palabras clave
+            const detectedType = Object.keys(templates).find(key => 
+                productName.toLowerCase().includes(key)
+            ) || 'blusa';
+            
+            resolve({
+                descripcion: templates[detectedType].descripcion,
+                categoria_sugerida: templates[detectedType].categoria_sugerida
+            });
+        }, 2000); // Simular delay de API
+    });
+}
+
+function suggestCategory(categoryName) {
+    const categorySelect = document.getElementById('categoria-nueva');
+    if (!categorySelect) return;
+    
+    // Buscar categoría por nombre
+    const category = categoriesData.categorias.find(cat => 
+        cat.nombre.toLowerCase().includes(categoryName.toLowerCase())
+    );
+    
+    if (category) {
+        categorySelect.value = category.id;
+        categorySelect.dispatchEvent(new Event('change')); // Trigger dependencias
+        
+        showAIStatus('info', `💡 Categoría sugerida: ${category.nombre}`);
+    }
+}
+
+function showAIStatus(type, message) {
+    const statusDiv = document.getElementById('ai-feedback');
+    if (!statusDiv) return;
+    
+    statusDiv.className = `ai-status ${type}`;
+    statusDiv.innerHTML = `
+        <div class="status-content">
+            ${type === 'loading' ? '<i class="fas fa-spinner fa-spin"></i>' : ''}
+            ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : ''}
+            ${type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : ''}
+            ${type === 'info' ? '<i class="fas fa-info-circle"></i>' : ''}
+            <span>${message}</span>
+        </div>
+    `;
+    statusDiv.style.display = 'block';
+    
+    // Auto-hide después de 10 segundos
+    if (type !== 'loading') {
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 10000);
+    }
+}
+
+// =====================================================
+// 🖼️ SISTEMA DE MÚLTIPLES IMÁGENES
+// =====================================================
+function setupMultipleImages() {
+    const uploadArea = document.getElementById('image-upload-area');
+    const imageInput = document.getElementById('imagenes');
+    
+    if (!uploadArea || !imageInput) return;
+    
+    uploadArea.addEventListener('click', () => imageInput.click());
+    uploadArea.addEventListener('dragover', handleImageDragOver);
+    uploadArea.addEventListener('drop', handleImageDropped);
+    imageInput.addEventListener('change', (e) => handleImageFiles(e.target.files));
+}
+
+function handleImageDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleImageDropped(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+    handleImageFiles(e.dataTransfer.files);
+}
+
+async function handleImageFiles(files) {
+    const preview = document.getElementById('images-preview');
+    if (!preview) return;
+    
+    for (let file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        
+        const imageData = {
+            id: ++imageCounter,
+            file: file,
+            preview: URL.createObjectURL(file),
+            isMain: selectedImages.length === 0 // Primera imagen es principal
+        };
+        
+        selectedImages.push(imageData);
+        renderImagePreview(imageData);
+    }
+    
+    updateImageControls();
+}
+
+function renderImagePreview(imageData) {
+    const preview = document.getElementById('images-preview');
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'image-preview-item';
+    imageDiv.dataset.imageId = imageData.id;
+    
+    imageDiv.innerHTML = `
+        <img src="${imageData.preview}" alt="Preview">
+        <div class="image-controls">
+            <button type="button" class="btn-small ${imageData.isMain ? 'btn-primary' : 'btn-secondary'}" 
+                    onclick="setMainImage(${imageData.id})">
+                ${imageData.isMain ? '⭐ Principal' : 'Hacer Principal'}
+            </button>
+            <button type="button" class="btn-small btn-danger" onclick="removeImage(${imageData.id})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        ${imageData.isMain ? '<div class="main-badge">Principal</div>' : ''}
+    `;
+    
+    preview.appendChild(imageDiv);
+}
+
+window.setMainImage = function(imageId) {
+    selectedImages.forEach(img => img.isMain = img.id === imageId);
+    refreshImagePreviews();
+};
+
+window.removeImage = function(imageId) {
+    selectedImages = selectedImages.filter(img => img.id !== imageId);
+    
+    // Si se eliminó la imagen principal, hacer principal la primera
+    if (selectedImages.length > 0 && !selectedImages.some(img => img.isMain)) {
+        selectedImages[0].isMain = true;
+    }
+    
+    refreshImagePreviews();
+};
+
+function refreshImagePreviews() {
+    const preview = document.getElementById('images-preview');
+    preview.innerHTML = '';
+    selectedImages.forEach(imageData => renderImagePreview(imageData));
+    updateImageControls();
+}
+
+function updateImageControls() {
+    const uploadArea = document.getElementById('image-upload-area');
+    const counter = document.querySelector('.images-counter') || createImagesCounter();
+    
+    counter.textContent = `${selectedImages.length} imagen(es) seleccionada(s)`;
+    
+    if (selectedImages.length > 0) {
+        uploadArea.classList.add('has-images');
+    } else {
+        uploadArea.classList.remove('has-images');
+    }
+}
+
+function createImagesCounter() {
+    const counter = document.createElement('div');
+    counter.className = 'images-counter';
+    const uploadArea = document.getElementById('image-upload-area');
+    if (uploadArea && uploadArea.parentNode) {
+        uploadArea.parentNode.appendChild(counter);
+    }
+    return counter;
+}
+
+// =====================================================
+// 📝 MANEJO DE FORMULARIOS
+// =====================================================
+function setupEventListeners(products) {
+    const productForm = document.getElementById('product-form');
+    const searchInput = document.getElementById('search-products');
+    const logoutButton = document.getElementById('logout-button');
+    
+    if (productForm) {
+        productForm.addEventListener('submit', (e) => handleProductFormSubmit(e, products));
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => filterProducts(e.target.value));
+    }
+    
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            if (confirm('¿Estás seguro de cerrar sesión?')) {
+                await supabaseCliente.auth.signOut();
+                window.location.href = '/login.html';
+            }
+        });
+    }
+    
+    // Navegación
+    setupNavigation();
+    setupMobileMenu();
+}
+
+async function handleProductFormSubmit(e, products) {
+    e.preventDefault();
+    
+    const submitButton = document.getElementById('submit-button');
+    if (!submitButton) return;
+    
+    const originalText = submitButton.textContent;
+    
+    try {
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        submitButton.disabled = true;
+        
+        // Recopilar datos del formulario
+        const formData = new FormData(e.target);
         const productData = {
             nombre: formData.get('nombre'),
             descripcion: formData.get('descripcion'),
             precio: parseFloat(formData.get('precio')),
-            stock: parseInt(formData.get('stock')),
-            categoria: formData.get('categoria'),
+            categoria: formData.get('categoria-nueva') ? undefined : (formData.get('nombre').split(' ')[0] || 'General'),
+            categoria_nueva_id: formData.get('categoria-nueva') || null,
+            tipo_producto_id: formData.get('tipo-producto') || null,
+            material_id: formData.get('material') || null,
+            destacado: formData.has('destacado'),
+            generar_con_ia: formData.has('generar-con-ia'),
+            activo: true
         };
-
-        const file = DOMElements.imageInput.files[0];
-        let imageUrl;
-
-        if (file) {
-            imageUrl = await uploadImage(file);
-        } else if (editingProductId) {
-            const existingProduct = allProducts.find(p => p.id === editingProductId);
-            imageUrl = existingProduct.imagen_url;
-        } else {
-            throw new Error('Debes seleccionar una imagen para el nuevo producto.');
+        
+        // Recopilar colores seleccionados
+        const selectedColors = [];
+        document.querySelectorAll('#colores-grid input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedColors.push(checkbox.value);
+        });
+        if (selectedColors.length > 0) {
+            productData.colores_disponibles = selectedColors;
         }
-
-        productData.imagen_url = imageUrl;
-
-        let error;
+        
+        // Recopilar tallas
+        const tallas = formData.get('tallas');
+        if (tallas) {
+            productData.tallas_disponibles = tallas.split(',').map(t => t.trim()).filter(t => t);
+        }
+        
+        // Subir imágenes
+        const imageUrls = await uploadProductImages();
+        if (imageUrls.length > 0) {
+            productData.imagenes_urls = imageUrls;
+            productData.imagen_url = imageUrls[0]; // Mantener compatibilidad
+        }
+        
+        // Guardar producto
+        let result;
         if (editingProductId) {
-            const { error: updateError } = await supabase.from('productos').update(productData).eq('id', editingProductId);
-            error = updateError;
+            result = await supabaseCliente
+                .from('productos')
+                .update(productData)
+                .eq('id', editingProductId);
         } else {
-            const { error: insertError } = await supabase.from('productos').insert([productData]);
-            error = insertError;
+            result = await supabaseCliente
+                .from('productos')
+                .insert([productData]);
         }
-
-        if (error) throw error;
-
-        alert(`Producto ${editingProductId ? 'actualizado' : 'creado'} con éxito!`);
-        await loadInitialData();
-        switchSection('products');
-
+        
+        if (result.error) throw result.error;
+        
+        // Recargar datos
+        const newData = await loadInitialData();
+        renderUI(newData);
+        
+        // Resetear formulario
+        resetProductForm();
+        
+        alert(editingProductId ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente');
+        
     } catch (error) {
+        console.error('Error guardando producto:', error);
         alert('Error al guardar el producto: ' + error.message);
     } finally {
-        DOMElements.submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
     }
 }
 
+async function uploadProductImages() {
+    const uploadedUrls = [];
+    
+    for (let imageData of selectedImages) {
+        try {
+            const fileName = `productos/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+            
+            const { data, error } = await supabaseCliente.storage
+                .from('productos')
+                .upload(fileName, imageData.file);
+            
+            if (error) throw error;
+            
+            const { data: urlData } = supabaseCliente.storage
+                .from('productos')
+                .getPublicUrl(fileName);
+            
+            uploadedUrls.push(urlData.publicUrl);
+            
+        } catch (error) {
+            console.error('Error subiendo imagen:', error);
+        }
+    }
+    
+    return uploadedUrls;
+}
+
 function resetProductForm() {
+    const form = document.getElementById('product-form');
+    if (form) form.reset();
+    
+    selectedImages = [];
+    imageCounter = 0;
     editingProductId = null;
-    DOMElements.productForm.reset();
-    DOMElements.imagePreview.src = '';
-    DOMElements.imagePreview.style.display = 'none';
-    DOMElements.imageInput.value = '';
-    DOMElements.formTitle.textContent = 'Añadir Nuevo Producto';
-    DOMElements.submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+    
+    const imagesPreview = document.getElementById('images-preview');
+    if (imagesPreview) imagesPreview.innerHTML = '';
+    
+    const formTitle = document.getElementById('form-title');
+    if (formTitle) formTitle.textContent = 'Nuevo Producto';
+    
+    const submitButton = document.getElementById('submit-button');
+    if (submitButton) submitButton.textContent = 'Crear Producto';
+    
+    // Resetear colores
+    document.querySelectorAll('#colores-grid input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    updateSelectedColors();
+    updateImageControls();
 }
 
-// --- GESTIÓN DE IMÁGENES ---
-async function uploadImage(file) {
-    const filePath = `public/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from('productos').upload(filePath, file);
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('productos').getPublicUrl(filePath);
-    return data.publicUrl;
+// =====================================================
+// 🔧 FUNCIONES ADICIONALES
+// =====================================================
+async function editProduct(productId) {
+    try {
+        // Intentar cargar desde vista completa primero
+        let product;
+        try {
+            const { data: vistaProduct, error: vistaError } = await supabaseCliente
+                .from('vista_productos_completa')
+                .select('*')
+                .eq('id', productId)
+                .single();
+            
+            if (!vistaError && vistaProduct) {
+                product = vistaProduct;
+            }
+        } catch (vistaError) {
+            // Fallback a tabla básica
+            const { data: basicProduct, error: basicError } = await supabaseCliente
+                .from('productos')
+                .select('*')
+                .eq('id', productId)
+                .single();
+            
+            if (basicError) throw basicError;
+            product = basicProduct;
+        }
+        
+        // Llenar formulario
+        const nombreInput = document.getElementById('nombre');
+        const descripcionInput = document.getElementById('descripcion');
+        const precioInput = document.getElementById('precio');
+        
+        if (nombreInput) nombreInput.value = product.nombre || '';
+        if (descripcionInput) descripcionInput.value = product.descripcion || '';
+        if (precioInput) precioInput.value = product.precio || '';
+        
+        // Solo llenar campos nuevos si existen
+        const categoriaSelect = document.getElementById('categoria-nueva');
+        if (categoriaSelect) categoriaSelect.value = product.categoria_nueva_id || '';
+        
+        const tipoSelect = document.getElementById('tipo-producto');
+        if (tipoSelect) tipoSelect.value = product.tipo_producto_id || '';
+        
+        const materialSelect = document.getElementById('material');
+        if (materialSelect) materialSelect.value = product.material_id || '';
+        
+        const destacadoCheck = document.getElementById('destacado');
+        if (destacadoCheck) destacadoCheck.checked = product.destacado || false;
+        
+        const genAICheck = document.getElementById('generar-con-ia');
+        if (genAICheck) genAICheck.checked = product.generar_con_ia || false;
+        
+        // Trigger categorías para cargar tipos
+        if (product.categoria_nueva_id && categoriaSelect) {
+            categoriaSelect.dispatchEvent(new Event('change'));
+            setTimeout(() => {
+                if (tipoSelect) tipoSelect.value = product.tipo_producto_id || '';
+            }, 100);
+        }
+        
+        // Tallas
+        if (product.tallas_disponibles) {
+            const tallasInput = document.getElementById('tallas');
+            if (tallasInput) {
+                const tallas = Array.isArray(product.tallas_disponibles) ? 
+                    product.tallas_disponibles.join(', ') : product.tallas_disponibles;
+                tallasInput.value = tallas;
+            }
+        }
+        
+        // Colores
+        if (product.colores_disponibles) {
+            const colores = Array.isArray(product.colores_disponibles) ? 
+                product.colores_disponibles : 
+                (typeof product.colores_disponibles === 'string' ? 
+                    JSON.parse(product.colores_disponibles || '[]') : []);
+            
+            document.querySelectorAll('#colores-grid input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = colores.includes(checkbox.value);
+            });
+            updateSelectedColors();
+        }
+        
+        editingProductId = productId;
+        
+        const formTitle = document.getElementById('form-title');
+        if (formTitle) formTitle.textContent = 'Editar Producto';
+        
+        const submitButton = document.getElementById('submit-button');
+        if (submitButton) submitButton.textContent = 'Actualizar Producto';
+        
+        // Scroll al formulario
+        const newProductSection = document.getElementById('new-product');
+        if (newProductSection) newProductSection.scrollIntoView({ behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('Error cargando producto:', error);
+        alert('Error al cargar el producto');
+    }
 }
 
-function setupImageUploadListeners() {
-    DOMElements.imageUploadArea.addEventListener('click', () => DOMElements.imageInput.click());
-    DOMElements.imageInput.addEventListener('change', (e) => handleFileSelect(e.target.files));
-    ['dragover', 'dragleave', 'drop'].forEach(eventName => {
-        DOMElements.imageUploadArea.addEventListener(eventName, (e) => {
+async function toggleDestacado(productId) {
+    try {
+        const product = currentProductsData.find(p => p.id === productId);
+        if (!product) return;
+        
+        const { error } = await supabaseCliente
+            .from('productos')
+            .update({ destacado: !product.destacado })
+            .eq('id', productId);
+        
+        if (error) throw error;
+        
+        // Recargar datos
+        const newData = await loadInitialData();
+        renderUI(newData);
+        
+    } catch (error) {
+        console.error('Error actualizando destacado:', error);
+        alert('Error al actualizar el producto');
+    }
+}
+
+async function confirmDelete(productId) {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+    
+    try {
+        const { error } = await supabaseCliente
+            .from('productos')
+            .delete()
+            .eq('id', productId);
+        
+        if (error) throw error;
+        
+        // Recargar datos
+        const newData = await loadInitialData();
+        renderUI(newData);
+        
+        alert('Producto eliminado exitosamente');
+        
+    } catch (error) {
+        console.error('Error eliminando producto:', error);
+        alert('Error al eliminar el producto');
+    }
+}
+
+function filterProducts(searchTerm) {
+    const filteredProducts = currentProductsData.filter(product =>
+        product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.descripcion && product.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.categoria_nueva_nombre && product.categoria_nueva_nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.categoria && product.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    
+    renderProductsTable(filteredProducts);
+}
+
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.admin-section');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            if (eventName === 'dragover') e.currentTarget.classList.add('dragover');
-            if (eventName === 'dragleave' || eventName === 'drop') e.currentTarget.classList.remove('dragover');
-            if (eventName === 'drop') handleFileSelect(e.dataTransfer.files);
+            const targetSection = item.dataset.section;
+            
+            if (!targetSection) return; // Skip logout button
+            
+            // Actualizar navegación activa
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            
+            // Mostrar sección correspondiente
+            sections.forEach(section => {
+                section.style.display = section.id === targetSection ? 'block' : 'none';
+            });
         });
     });
 }
 
-function handleFileSelect(files) {
-    const file = files[0];
-    if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            DOMElements.imagePreview.src = e.target.result;
-            DOMElements.imagePreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// --- ELIMINACIÓN DE PRODUCTOS ---
-function confirmDelete(productId) {
-    const product = allProducts.find(p => p.id === productId);
-    DOMElements.confirmMessage.textContent = `¿Estás seguro de que deseas eliminar el producto "${product.nombre}"? Esta acción no se puede deshacer.`;
-    DOMElements.confirmModal.style.display = 'block';
-
-    DOMElements.confirmYesBtn.onclick = () => {
-        deleteProduct(productId);
-        DOMElements.confirmModal.style.display = 'none';
-    };
-}
-
-async function deleteProduct(productId) {
-    try {
-        const { error: deleteError } = await supabase.from('productos').delete().eq('id', productId);
-        if (deleteError) throw deleteError;
-
-        const productToDelete = allProducts.find(p => p.id === productId);
-        if (productToDelete && productToDelete.imagen_url) {
-            const fileName = productToDelete.imagen_url.split('/').pop();
-            await supabase.storage.from('productos').remove([`public/${fileName}`]);
-        }
+function setupMobileMenu() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.admin-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (menuToggle && sidebar && overlay) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
         
-        alert('Producto eliminado con éxito.');
-        await loadInitialData();
-
-    } catch (error) {
-        alert('Error al eliminar el producto: ' + error.message);
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
     }
 }
 
-// --- UTILIDADES ---
-function debounce(func, delay) {
-    let timeout;
-    return function(...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), delay);
+function loadFallbackCategories() {
+    categoriesData = {
+        categorias: [
+            { id: 1, nombre: 'Prendas de Vestir' },
+            { id: 2, nombre: 'Accesorios' },
+            { id: 3, nombre: 'Calzado' },
+            { id: 4, nombre: 'Bolsos y Carteras' },
+            { id: 5, nombre: 'Joyería' }
+        ],
+        tipos: [],
+        materiales: [
+            { id: 1, nombre: 'Algodón' },
+            { id: 2, nombre: 'Poliéster' },
+            { id: 3, nombre: 'Seda' }
+        ],
+        colores: [
+            { id: 1, nombre: 'Negro', codigo_hex: '#000000' },
+            { id: 2, nombre: 'Blanco', codigo_hex: '#FFFFFF' },
+            { id: 3, nombre: 'Rojo', codigo_hex: '#FF0000' },
+            { id: 4, nombre: 'Azul', codigo_hex: '#0000FF' },
+            { id: 5, nombre: 'Verde', codigo_hex: '#008000' }
+        ]
     };
+    
+    populateSelects();
+    console.log('📋 Datos de categorización fallback cargados');
 }
+
+console.log('🌟 Emprendedoras de Acero - Admin con IA cargado exitosamente');
 
