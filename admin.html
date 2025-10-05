@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Emprendedoras de Acero</title>
-    <link rel="stylesheet" href="./src/css/admin.css"> 
+    <link rel="stylesheet" href="./src/css/admin.css">
+    <link rel="stylesheet" href="./src/css/admin-mejorado.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -59,9 +60,9 @@
                         <p id="total-products">0</p>
                     </div>
                     <div class="stat-card">
-                        <i class="fas fa-boxes"></i>
-                        <h3>Stock Bajo (&lt;5)</h3>
-                        <p id="low-stock">0</p>
+                        <i class="fas fa-star"></i>
+                        <h3>Productos Destacados</h3>
+                        <p id="total-destacados">0</p>
                     </div>
                     <div class="stat-card">
                         <i class="fas fa-tag"></i>
@@ -91,8 +92,9 @@
                                 <th>Imagen</th>
                                 <th>Nombre</th>
                                 <th>Categoría</th>
+                                <th>Tipo</th>
                                 <th>Precio</th>
-                                <th>Stock</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -105,45 +107,117 @@
 
             <!-- Sección: Añadir/Editar Producto -->
             <section id="new-product" class="admin-section">
-                <h2>Añadir Nuevo Producto</h2>
+                <h2 id="form-title">Añadir Nuevo Producto</h2>
                 <form id="product-form" class="product-form" novalidate>
-                    <div class="form-grid">
+                    <!-- Sección de Imágenes Múltiples -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-images"></i> Imágenes del Producto</h3>
                         <div class="form-group span-2">
-                             <label for="imagen">Imagen del Producto</label>
-                            <div id="image-upload-area" class="image-upload-area">
-                                <p><i class="fas fa-cloud-upload-alt"></i></p>
-                                <p>Arrastra y suelta una imagen aquí, o haz clic para seleccionarla</p>
-                                <input type="file" id="imagen" name="imagen" accept="image/*" style="display: none;">
-                                <img id="image-preview" src="" alt="Vista previa de la imagen">
+                            <div id="image-upload-area" class="upload-zone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Arrastra múltiples imágenes aquí o haz clic para seleccionar</p>
+                                <p class="upload-hint">Puedes subir hasta 5 imágenes. La primera será la principal.</p>
+                                <input type="file" id="imagenes" name="imagenes" accept="image/*" multiple style="display: none;">
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="nombre">Nombre del Producto</label>
-                            <input type="text" id="nombre" name="nombre" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="categoria">Categoría</label>
-                            <input type="text" id="categoria" name="categoria" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="precio">Precio</label>
-                            <input type="number" id="precio" name="precio" step="0.01" min="0" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="stock">Stock</label>
-                            <input type="number" id="stock" name="stock" min="0" required>
-                        </div>
-                         <div class="form-group span-2">
-                            <label for="descripcion">Descripción</label>
-                            <textarea id="descripcion" name="descripcion" required rows="4"></textarea>
+                            <div id="images-preview" class="images-preview"></div>
                         </div>
                     </div>
+
+                    <!-- Información Básica -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nombre">Nombre del Producto *</label>
+                                <input type="text" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="precio">Precio *</label>
+                                <input type="number" id="precio" name="precio" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group span-2">
+                                <label for="descripcion">Descripción</label>
+                                <textarea id="descripcion" name="descripcion" rows="4" placeholder="Describe el producto detalladamente..."></textarea>
+                                
+                                <!-- Generador de IA -->
+                                <div class="ai-description-section">
+                                    <button type="button" id="ai-generate-btn" class="ai-generator-button">
+                                        <i class="fas fa-magic ai-icon"></i>
+                                        <span>Generar con IA</span>
+                                        <div class="ai-badge">BETA</div>
+                                    </button>
+                                    <div id="ai-feedback" class="ai-status" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categorización -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-tags"></i> Categorización</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="categoria-nueva">Categoría Principal</label>
+                                <select id="categoria-nueva" name="categoria-nueva">
+                                    <option value="">Selecciona una categoría</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tipo-producto">Tipo de Producto</label>
+                                <select id="tipo-producto" name="tipo-producto" disabled>
+                                    <option value="">Selecciona un tipo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="material">Material</label>
+                                <select id="material" name="material">
+                                    <option value="">Selecciona un material</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tallas">Tallas Disponibles</label>
+                                <input type="text" id="tallas" name="tallas" placeholder="XS, S, M, L, XL">
+                                <small>Separa las tallas con comas</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colores -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-palette"></i> Colores Disponibles</h3>
+                        <div class="color-selector">
+                            <div id="colores-grid" class="colors-grid">
+                                <!-- Los colores se cargarán dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración Adicional -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> Configuración</h3>
+                        <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="destacado" name="destacado">
+                                <span class="checkmark"></span>
+                                Producto Destacado
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="generar-con-ia" name="generar-con-ia">
+                                <span class="checkmark"></span>
+                                Generado con IA
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tips de IA -->
+                    <div id="ai-tips" class="ai-tips"></div>
+
                     <div class="form-actions">
                         <button type="submit" id="submit-button" class="btn primary">
-                            <i class="fas fa-save"></i> Guardar Producto
+                            <i class="fas fa-save"></i> Crear Producto
                         </button>
                         <button type="reset" class="btn secondary">
-                            <i class="fas fa-undo"></i> Limpiar
+                            <i class="fas fa-undo"></i> Cancelar
                         </button>
                     </div>
                 </form>
@@ -165,7 +239,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./src/js/admin.js"></script>
+    <script src="./src/js/admin-mejorado.js"></script>
 </body>
 </html>
 

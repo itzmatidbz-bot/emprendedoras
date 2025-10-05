@@ -41,17 +41,27 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
     // --- Carga de Productos ---
     async function loadProducts() {
-        const { data, error } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
+        try {
+            // Usar la vista completa que incluye las nuevas columnas
+            const { data, error } = await supabase
+                .from('vista_productos_completa')
+                .select('*')
+                .eq('activo', true)
+                .order('destacado', { ascending: false })
+                .order('created_at', { ascending: false });
 
-        if (error) {
+            if (error) throw error;
+
+            allProducts = data || [];
+            populateCategoryFilters();
+            renderProducts(allProducts);
+            
+            console.log(`✅ ${allProducts.length} productos cargados`);
+        } catch (error) {
             console.error('Error al cargar productos:', error);
             productGrid.innerHTML = '<p>No se pudieron cargar los productos. Intenta de nuevo más tarde.</p>';
-            return;
+            allProducts = [];
         }
-
-        allProducts = data;
-        populateCategoryFilters();
-        renderProducts(allProducts);
     }
     
     function renderProducts(products) {
@@ -66,17 +76,38 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         products.forEach((product, index) => {
             const card = document.createElement('div');
             card.className = 'product-card';
-            card.dataset.productId = product.id; // Guardamos el ID para fácil acceso
+            if (product.destacado) card.classList.add('destacado');
+            card.dataset.productId = product.id;
+            
+            // Usar la primera imagen de múltiples imágenes o la imagen principal
+            const imageUrl = product.imagenes_urls && product.imagenes_urls.length > 0 
+                ? product.imagenes_urls[0] 
+                : product.imagen_url;
             
             card.innerHTML = `
-                <img src="${product.imagen_url}" alt="${product.nombre}" class="product-card__image">
+                ${product.destacado ? '<div class="product-badge">⭐ Destacado</div>' : ''}
+                <img src="${imageUrl || '/placeholder.jpg'}" 
+                     alt="${product.nombre}" 
+                     class="product-card__image"
+                     onerror="this.src='/placeholder.jpg'">
                 <div class="product-card__content">
-                    <span class="product-card__category">${product.categoria}</span>
+                    <span class="product-card__category">
+                        ${product.categoria_nueva_nombre || product.categoria || 'Sin categoría'}
+                    </span>
                     <h3 class="product-card__title">${product.nombre}</h3>
                     <p class="product-card__price">$${product.precio.toFixed(2)}</p>
+                    ${product.colores_disponibles && product.colores_disponibles.length > 0 ? 
+                        `<div class="product-card__colors">
+                            ${product.colores_disponibles.slice(0, 4).map(color => 
+                                `<span class="color-dot" title="${color}"></span>`
+                            ).join('')}
+                            ${product.colores_disponibles.length > 4 ? 
+                                `<span class="more-colors">+${product.colores_disponibles.length - 4}</span>` : ''}
+                        </div>` : ''
+                    }
                 </div>
             `;
-            // Event listener para redirigir a la página del producto
+            
             card.addEventListener('click', () => {
                 window.location.href = `producto.html?id=${product.id}`;
             });
@@ -113,7 +144,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
     // --- Lógica de Filtros ---
     function populateCategoryFilters() {
-        const categories = [...new Set(allProducts.map(p => p.categoria))];
+        // Usar las nuevas categorías
+        const categories = [...new Set(allProducts.map(p => 
+            p.categoria_nueva_nombre || p.categoria || 'Sin categoría'
+        ))].filter(Boolean);
+        
         categoryFiltersContainer.innerHTML = '<button class="category-btn active" data-category="all">Todos</button>';
         categories.forEach(category => {
             categoryFiltersContainer.innerHTML += `<button class="category-btn" data-category="${category}">${category}</button>`;
@@ -132,7 +167,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         // 2. Filtro de Categoría
         const activeCategory = document.querySelector('.category-btn.active').dataset.category;
         if (activeCategory !== 'all') {
-            filteredProducts = filteredProducts.filter(p => p.categoria === activeCategory);
+            filteredProducts = filteredProducts.filter(p => 
+                (p.categoria_nueva_nombre || p.categoria || 'Sin categoría') === activeCategory
+            );
         }
 
         // 3. Filtro de Precio
